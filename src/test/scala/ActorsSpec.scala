@@ -2,12 +2,11 @@
 import akka.actor.ActorSystem
 import akka.util.Timeout
 import org.scalatest.FunSpec
-import akka.testkit.{ImplicitSender, TestKit, TestActorRef}
+import akka.testkit.{ ImplicitSender, TestKit, TestActorRef }
 import akka.pattern.ask
 import org.scalatest.matchers.MustMatchers
 import scala.concurrent.duration._
 import scala.util.Success
-
 
 class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec with ImplicitSender with MustMatchers {
   def this() = this(ActorSystem("ActorsSpec"))
@@ -19,7 +18,6 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
       ref ! PossiblyMultipleMetricRawString("aaa\nbbb")
       expectMsgAllConformingOf(1 second, classOf[SingleMetricRawString], classOf[SingleMetricRawString]) must be(Seq(SingleMetricRawString("aaa"), SingleMetricRawString("bbb")))
 
-
     }
 
     it("should handle a single metric  string and emit one SingleMetricRawString") {
@@ -30,7 +28,6 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
     }
 
   }
-
 
   describe("Raw metric Decoder actor") {
     val ref = TestActorRef(new MetricDecoderActor)
@@ -67,7 +64,6 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
       expectMsg(10 millis, new SetOp(b, 100) with DistinctStyle)
 
     }
-
 
   }
 }
