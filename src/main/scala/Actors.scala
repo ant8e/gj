@@ -12,11 +12,11 @@ case class SingleMetricRawString(s: String)
 
 class MetricServerActor extends Actor with ActorLogging {
   // Metric Handler
-  val decoder = context.actorOf(Props[MetricCoordinatorActor])
+  val handler = context.actorOf(Props[MetricCoordinatorActor])
 
   def receive = {
-    // transform the payload to an UTF-8 String and send it to a decoder
-    case Udp.Received(data, _) ⇒ decoder ! PossiblyMultipleMetricRawString((data.decodeString("UTF-8")))
+    // transform the UDP payload to an UTF-8 String and send it to a decoder
+    case Udp.Received(data, _) ⇒ handler ! PossiblyMultipleMetricRawString((data.decodeString("UTF-8")))
   }
 
 }
