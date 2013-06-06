@@ -54,6 +54,7 @@ class MetricDecoderActor extends Actor with ActorLogging {
       case Failure(e) ⇒ log.debug("unable to parse message {} because {}", m, e)
     }
   }
+
   //Metric parsing regex
   val ParsingRegExp = """(.*):([+-]?\d+)\|([cgs]|ms)(|@[.\d]+)?""".r
   val SignedDigit = "[+-]\\d+".r
@@ -80,6 +81,23 @@ class MetricDecoderActor extends Actor with ActorLogging {
       case "s" ⇒ new SetOp(b, v) with DistinctStyle
 
     }
+  }
+
+
+  class MetricAggregatorActor extends Actor {
+    def receive = {
+      case m: MetricOp => {
+        val child = context.child(m.bucket.name)
+        child match {
+          case Some(ref) => ref ! m
+          case None => context.actorOf(Props[MetricAggregatorWorkerActor], m.bucket.name) ! m
+        }
+      }
+    }
+  }
+
+  class MetricAggregatorWorkerActor extends Actor {
+    def receive = ???
   }
 
 }
