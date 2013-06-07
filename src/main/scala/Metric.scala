@@ -16,13 +16,21 @@ case class SetOp(bucket: Bucket, value: Int) extends MetricOp
 
 sealed trait MetricStyle {
   val bucket: Bucket
+  val styleTag: String
 }
 
-trait GaugeStyle extends MetricStyle
+trait GaugeStyle extends MetricStyle {
+  val styleTag = "G"
+}
 
-trait CounterStyle extends MetricStyle
+trait CounterStyle extends MetricStyle {
+  val styleTag = "C"
+}
 
-trait TimingStyle extends MetricStyle
+trait TimingStyle extends MetricStyle {
+  val styleTag = "T"
+}
 
-trait DistinctStyle extends MetricStyle
-
+trait DistinctStyle extends MetricStyle {
+  val styleTag = "D"
+}

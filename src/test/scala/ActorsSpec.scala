@@ -1,12 +1,16 @@
 
+
+
 import akka.actor.ActorSystem
 import akka.util.Timeout
 import org.scalatest.FunSpec
-import akka.testkit.{ ImplicitSender, TestKit, TestActorRef }
+import akka.testkit.{ImplicitSender, TestKit, TestActorRef}
 import akka.pattern.ask
 import org.scalatest.matchers.MustMatchers
 import scala.concurrent.duration._
 import scala.util.Success
+import language.postfixOps
+
 
 class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec with ImplicitSender with MustMatchers {
   def this() = this(ActorSystem("ActorsSpec"))
@@ -29,9 +33,9 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
 
   }
 
+  val b = SimpleBucket("toto")
   describe("Raw metric Decoder actor") {
     val ref = TestActorRef(new MetricDecoderActor)
-    val b = SimpleBucket("toto")
 
     it("should decode counter metrics") {
       ref ! SingleMetricRawString("toto:1|c")
@@ -66,4 +70,62 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
     }
 
   }
+
+  describe("Gauge Style Worker actor ") {
+    it("should set the gauge with a SetOp") {
+      val ref = TestActorRef(new GaugeAggregatorWorkerActor)
+      ref ! new SetOp(b, 42)
+      ref.underlyingActor.value must be(42)
+    }
+    it("should increment the gauge with a IncOp") {
+      val ref = TestActorRef(new GaugeAggregatorWorkerActor)
+      ref ! new IncOp(b, 1)
+      ref.underlyingActor.value must be(1)
+    }
+  }
+
+  describe("Counter Style Worker actor ") {
+    it("should NOT set the counter with a SetOp") {
+      val ref = TestActorRef(new CounterAggregatorWorkerActor)
+      ref ! new SetOp(b, 42)
+      ref.underlyingActor.value must be(0)
+    }
+    it("should increment the gauge with a IncOp") {
+      val ref = TestActorRef(new CounterAggregatorWorkerActor)
+      ref ! new IncOp(b, 42)
+      ref.underlyingActor.value must be(42)
+    }
+
+  }
+  describe("Timing Style Worker actor ") {
+    it("should set the timing  with a SetOp"){
+      val ref = TestActorRef(new TimingAggregatorWorkerActor)
+      ref ! new SetOp(b, 42)
+      ref.underlyingActor.value must be(42)
+    }
+    it("should NOT increment the timing with a IncOp"){
+      val ref = TestActorRef(new TimingAggregatorWorkerActor)
+      ref ! new IncOp(b, 42)
+      ref.underlyingActor.value must be(0)
+    }
+
+  }
+  describe("Distinct Style Worker actor ") {
+    it("should set the distinct  with a SetOp"){
+      val ref = TestActorRef(new DistinctAggregatorWorkerActor)
+      ref ! new SetOp(b, 42)
+      ref.underlyingActor.value must be(1)
+      ref ! new SetOp(b, 42)
+      ref.underlyingActor.value must be(1)
+      ref ! new SetOp(b, 123)
+      ref.underlyingActor.value must be(2)
+
+    }
+    it("should NOT increment the gauge with a IncOp"){
+      val ref = TestActorRef(new DistinctAggregatorWorkerActor)
+      ref ! new IncOp(b, 42)
+      ref.underlyingActor.value must be(0)}
+
+  }
+
 }
