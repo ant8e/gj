@@ -1,16 +1,14 @@
 
 
-
 import akka.actor.ActorSystem
 import akka.util.Timeout
 import org.scalatest.FunSpec
-import akka.testkit.{ImplicitSender, TestKit, TestActorRef}
+import akka.testkit.{ ImplicitSender, TestKit, TestActorRef }
 import akka.pattern.ask
 import org.scalatest.matchers.MustMatchers
 import scala.concurrent.duration._
 import scala.util.Success
 import language.postfixOps
-
 
 class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec with ImplicitSender with MustMatchers {
   def this() = this(ActorSystem("ActorsSpec"))
@@ -98,12 +96,12 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
 
   }
   describe("Timing Style Worker actor ") {
-    it("should set the timing  with a SetOp"){
+    it("should set the timing  with a SetOp") {
       val ref = TestActorRef(new TimingAggregatorWorkerActor)
       ref ! new SetOp(b, 42)
       ref.underlyingActor.value must be(42)
     }
-    it("should NOT increment the timing with a IncOp"){
+    it("should NOT increment the timing with a IncOp") {
       val ref = TestActorRef(new TimingAggregatorWorkerActor)
       ref ! new IncOp(b, 42)
       ref.underlyingActor.value must be(0)
@@ -111,7 +109,7 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
 
   }
   describe("Distinct Style Worker actor ") {
-    it("should set the distinct  with a SetOp"){
+    it("should set the distinct  with a SetOp") {
       val ref = TestActorRef(new DistinctAggregatorWorkerActor)
       ref ! new SetOp(b, 42)
       ref.underlyingActor.value must be(1)
@@ -121,10 +119,11 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
       ref.underlyingActor.value must be(2)
 
     }
-    it("should NOT increment the gauge with a IncOp"){
+    it("should NOT increment the gauge with a IncOp") {
       val ref = TestActorRef(new DistinctAggregatorWorkerActor)
       ref ! new IncOp(b, 42)
-      ref.underlyingActor.value must be(0)}
+      ref.underlyingActor.value must be(0)
+    }
 
   }
 

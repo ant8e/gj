@@ -1,8 +1,8 @@
-import akka.actor.{Props, ActorLogging, Actor}
+import akka.actor.{ Props, ActorLogging, Actor }
 import akka.io.Udp
 import akka.routing.RoundRobinRouter
 import scala.reflect.ClassTag
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
 //Messages
 case class PossiblyMultipleMetricRawString(s: String)
@@ -68,7 +68,9 @@ class MetricDecoderActor extends Actor with ActorLogging {
     //TODO support counter sampling param
     val ParsingRegExp(bucket, value, style, _) = rawString.trim
     val b = SimpleBucket(bucket)
-    val v: Int = value.toInt
+    val v: Int = if (value(0) == '+')
+      value.drop(1).toInt // Java 1.6 does not handle the + sign, later version do
+    else value.toInt
 
     style match {
       case "c" ⇒ new IncOp(b, v) with CounterStyle
@@ -130,9 +132,9 @@ class TimingAggregatorWorkerActor extends Actor with LongValueAggregator {
   }
 }
 
-class DistinctAggregatorWorkerActor extends Actor  {
+class DistinctAggregatorWorkerActor extends Actor {
   private[this] var set = Set[Int]()
-  def value = set.size :Long
+  def value = set.size: Long
 
   def receive = {
     case SetOp(_, v) ⇒ set = set + v
