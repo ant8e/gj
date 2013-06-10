@@ -31,7 +31,7 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
 
   }
 
-  val b = SimpleBucket("toto")
+  val b = SimpleBucket("test.bucket")
   describe("Raw metric Decoder actor") {
     val ref = TestActorRef(new MetricDecoderActor)
 
