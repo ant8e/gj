@@ -36,38 +36,39 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
     val ref = TestActorRef(new MetricDecoderActor)
 
     it("should decode counter metrics") {
-      ref ! SingleMetricRawString("toto:1|c")
+      ref ! SingleMetricRawString("test.bucket:1|c")
       expectMsg(10 millis, new IncOp(b, 1) with CounterStyle)
     }
 
     it("should decode timing metrics") {
-      ref ! SingleMetricRawString("toto:100|ms")
+      ref ! SingleMetricRawString("test.bucket:100|ms")
       expectMsg(10 millis, new SetOp(b, 100) with TimingStyle)
 
     }
 
     it("should decode gauge setting metrics") {
-      ref ! SingleMetricRawString("toto:100|g")
+      ref ! SingleMetricRawString("test.bucket:100|g")
       expectMsg(10 millis, new SetOp(b, 100) with GaugeStyle)
 
     }
 
     it("should decode Gauge updating metrics (dec)") {
-      ref ! SingleMetricRawString("toto:-100|g")
+      ref ! SingleMetricRawString("test.bucket:-100|g")
       expectMsg(10 millis, new IncOp(b, -100) with GaugeStyle)
     }
 
     it("should decode Gauge updating metrics (inc)") {
-      ref ! SingleMetricRawString("toto:+100|g")
+      ref ! SingleMetricRawString("test.bucket:+100|g")
       expectMsg(10 millis, new IncOp(b, 100) with GaugeStyle)
     }
     it("should decode Distinct setting metrics") {
-      ref ! SingleMetricRawString("toto:100|s")
+      ref ! SingleMetricRawString("test.bucket:100|s")
       expectMsg(10 millis, new SetOp(b, 100) with DistinctStyle)
 
     }
 
   }
+  val flushOp: FlushOp = FlushOp(b, System.currentTimeMillis)
 
   describe("Gauge Style Worker actor ") {
     it("should set the gauge with a SetOp") {
@@ -79,6 +80,15 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
       val ref = TestActorRef(new GaugeAggregatorWorkerActor)
       ref ! new IncOp(b, 1)
       ref.underlyingActor.value must be(1)
+    }
+
+    it ("should not reset the value on flush"){
+      val ref = TestActorRef(new GaugeAggregatorWorkerActor)
+      ref ! new IncOp(b, 1)
+      ref.underlyingActor.value must be(1)
+      ref !   flushOp
+      ref.underlyingActor.value must be(1)
+
     }
   }
 
@@ -93,6 +103,14 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
       ref ! new IncOp(b, 42)
       ref.underlyingActor.value must be(42)
     }
+    it ("should reset the value on flush"){
+      val ref = TestActorRef(new CounterAggregatorWorkerActor)
+      ref ! new IncOp(b, 1)
+      ref.underlyingActor.value must be(1)
+      ref !   flushOp
+      ref.underlyingActor.value must be(0)
+
+    }
 
   }
   describe("Timing Style Worker actor ") {
@@ -106,7 +124,14 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
       ref ! new IncOp(b, 42)
       ref.underlyingActor.value must be(0)
     }
+    it ("should reset the value on flush"){
+      val ref = TestActorRef(new TimingAggregatorWorkerActor)
+      ref ! new SetOp(b, 1)
+      ref.underlyingActor.value must be(1)
+      ref !   flushOp
+      ref.underlyingActor.value must be(0)
 
+    }
   }
   describe("Distinct Style Worker actor ") {
     it("should set the distinct  with a SetOp") {
@@ -123,6 +148,14 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
       val ref = TestActorRef(new DistinctAggregatorWorkerActor)
       ref ! new IncOp(b, 42)
       ref.underlyingActor.value must be(0)
+    }
+    it ("should reset the value on flush"){
+      val ref = TestActorRef(new DistinctAggregatorWorkerActor)
+      ref ! new SetOp(b, 1)
+      ref.underlyingActor.value must be(1)
+      ref !   flushOp
+      ref.underlyingActor.value must be(0)
+
     }
 
   }
