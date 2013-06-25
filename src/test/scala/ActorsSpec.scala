@@ -1,5 +1,6 @@
 
 
+import Messages._
 import MetricOperation.{ Flush, SetValue, Increment }
 import MetricStyle.{ Distinct, Gauge, Timing, Counter }
 import akka.actor.ActorSystem
@@ -162,6 +163,25 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
 
     }
 
+  }
+
+
+  describe ("Metric Aggregator Actor") {
+    it ("should start with an empty list of active buckets"){
+      val ref =TestActorRef(new MetricAggregatorActor)
+      val future = ref ? Messages.BucketListQuery()
+      val Success(v: Messages.BucketListResponse) = future.value.get
+      v.buckets must have size (0)
+    }
+
+    it ("should maintain a list of active buckets"){
+      val ref =TestActorRef(new MetricAggregatorActor)
+      ref ! new SetValue(b,1) with Gauge
+      val future = ref ? Messages.BucketListQuery()
+      val Success(v: Messages.BucketListResponse) = future.value.get
+      v.buckets must have size (1)
+      v.buckets must contain ("G."+b.name)
+    }
   }
 
 }

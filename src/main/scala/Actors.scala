@@ -1,14 +1,21 @@
-import MetricOperation.{ SetValue, Increment, Flush }
-import MetricStyle.{ Distinct, Gauge, Timing, Counter }
-import akka.actor.{ Props, ActorLogging, Actor }
+import Messages.{BucketListResponse, BucketListQuery, SingleMetricRawString, PossiblyMultipleMetricRawString}
+import MetricOperation.{SetValue, Increment, Flush}
+import MetricStyle.{Distinct, Gauge, Timing, Counter}
+import akka.actor.{Props, ActorLogging, Actor}
 import akka.io.Udp
 import akka.routing.RoundRobinRouter
-import scala.util.{ Failure, Success, Try }
+import scala.util.{Failure, Success, Try}
 
 //Messages
-case class PossiblyMultipleMetricRawString(s: String)
+object Messages {
 
-case class SingleMetricRawString(s: String)
+  case class PossiblyMultipleMetricRawString(s: String)
+
+  case class SingleMetricRawString(s: String)
+  case class BucketListQuery()
+  case class BucketListResponse(buckets : Iterable[String])
+
+}
 
 /**
  * Listen to UDP messages and fed them to the decoding actors
@@ -33,10 +40,19 @@ class MetricCoordinatorActor extends Actor with ActorLogging {
   val decoder = context.actorOf(Props[MetricDecoderActor].withRouter(RoundRobinRouter(5)))
   val aggregator = context.actorOf(Props[MetricAggregatorActor].withRouter(RoundRobinRouter(5)))
 
+  import scala.concurrent.duration._
+  import context.dispatcher
+
+  val tick = context.system.scheduler.schedule(500 millis, 1000 millis, self, "tick")
+
+  override def postStop() = tick.cancel()
+
+
   def receive = {
     case m: PossiblyMultipleMetricRawString ⇒ splitter ! m
     case m: SingleMetricRawString ⇒ decoder ! m
     case m: MetricOperation with MetricStyle ⇒ aggregator ! m
+    case "tick" => aggregator ! MetricOperation.Flush
   }
 }
 
@@ -98,15 +114,19 @@ class MetricDecoderActor extends Actor with ActorLogging {
  */
 class MetricAggregatorActor extends Actor {
 
+  private var buckets = Set[String]()
+
   def receive = {
     case m: MetricOperation with MetricStyle ⇒ {
       val name: String = metricActorName(m)
+      buckets = buckets + name
       val child = context.child(name).getOrElse(context.actorOf(Props(buildActor(m)), name))
       child ! m
     }
+    case m : BucketListQuery => sender ! BucketListResponse(buckets)
   }
 
-  private def metricActorName(m: MetricOperation with MetricStyle) = m.styleTag + "#" + m.bucket.name
+  private def metricActorName(m: MetricOperation with MetricStyle) = m.styleTag + "." + m.bucket.name
 
   /**
    * Build the AggregatorWorkerActor corresponding to the metric style
