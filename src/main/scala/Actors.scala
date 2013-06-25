@@ -1,8 +1,9 @@
-import akka.actor.{Props, ActorLogging, Actor}
+import MetricOperation.{ SetValue, Increment, Flush }
+import MetricStyle.{ Distinct, Gauge, Timing, Counter }
+import akka.actor.{ Props, ActorLogging, Actor }
 import akka.io.Udp
 import akka.routing.RoundRobinRouter
-import scala.reflect.ClassTag
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
 //Messages
 case class PossiblyMultipleMetricRawString(s: String)
@@ -35,7 +36,7 @@ class MetricCoordinatorActor extends Actor with ActorLogging {
   def receive = {
     case m: PossiblyMultipleMetricRawString ⇒ splitter ! m
     case m: SingleMetricRawString ⇒ decoder ! m
-    case m: MetricOp with MetricStyle  ⇒ aggregator !m
+    case m: MetricOperation with MetricStyle ⇒ aggregator ! m
   }
 }
 
@@ -71,7 +72,7 @@ class MetricDecoderActor extends Actor with ActorLogging {
    * @param rawString the metric string
    * @return  Success if everything went right Failure instead
    */
-  private def parse(rawString: String): Try[MetricOp with MetricStyle] = Try {
+  private def parse(rawString: String): Try[MetricOperation with MetricStyle] = Try {
     //TODO support counter sampling param
     val ParsingRegExp(bucket, value, style, _) = rawString.trim
     val b = SimpleBucket(bucket)
@@ -80,13 +81,13 @@ class MetricDecoderActor extends Actor with ActorLogging {
     else value.toInt
 
     style match {
-      case "c" ⇒ new IncOp(b, v) with CounterStyle
-      case "ms" ⇒ new SetOp(b, v) with TimingStyle
+      case "c" ⇒ new Increment(b, v) with Counter
+      case "ms" ⇒ new SetValue(b, v) with Timing
       case "g" ⇒ value match {
-        case SignedDigit() ⇒ new IncOp(b, v) with GaugeStyle
-        case _ ⇒ new SetOp(b, v) with GaugeStyle
+        case SignedDigit() ⇒ new Increment(b, v) with Gauge
+        case _ ⇒ new SetValue(b, v) with Gauge
       }
-      case "s" ⇒ new SetOp(b, v) with DistinctStyle
+      case "s" ⇒ new SetValue(b, v) with Distinct
 
     }
   }
@@ -98,14 +99,14 @@ class MetricDecoderActor extends Actor with ActorLogging {
 class MetricAggregatorActor extends Actor {
 
   def receive = {
-    case m: MetricOp with MetricStyle ⇒ {
+    case m: MetricOperation with MetricStyle ⇒ {
       val name: String = metricActorName(m)
       val child = context.child(name).getOrElse(context.actorOf(Props(buildActor(m)), name))
       child ! m
     }
   }
 
-  private def metricActorName(m: MetricOp with MetricStyle) = m.styleTag + "#" + m.bucket.name
+  private def metricActorName(m: MetricOperation with MetricStyle) = m.styleTag + "#" + m.bucket.name
 
   /**
    * Build the AggregatorWorkerActor corresponding to the metric style
@@ -113,10 +114,10 @@ class MetricAggregatorActor extends Actor {
    * @return the corresponding actor
    */
   private def buildActor(s: MetricStyle): Actor = s match {
-    case _: CounterStyle ⇒ new CounterAggregatorWorkerActor
-    case _: TimingStyle ⇒ new TimingAggregatorWorkerActor
-    case _: GaugeStyle ⇒ new GaugeAggregatorWorkerActor
-    case _: DistinctStyle ⇒ new DistinctAggregatorWorkerActor
+    case _: Counter ⇒ new CounterAggregatorWorkerActor
+    case _: Timing ⇒ new TimingAggregatorWorkerActor
+    case _: Gauge ⇒ new GaugeAggregatorWorkerActor
+    case _: Distinct ⇒ new DistinctAggregatorWorkerActor
   }
 }
 
@@ -124,7 +125,7 @@ class MetricAggregatorActor extends Actor {
  * This trait maintains a long variable and defines partial Receive function to act on that value
  */
 trait LongValueAggregator {
-  self: MetricStore[Long] with Actor =>
+  self: MetricStore[Long] with Actor ⇒
   protected[this] var _value: Long = 0
 
   def value = _value
@@ -132,25 +133,24 @@ trait LongValueAggregator {
   private[this] def reset = _value = 0
 
   def incrementIt: Actor.Receive = {
-    case IncOp(_, v) ⇒ _value = _value + v
+    case Increment(_, v) ⇒ _value = _value + v
   }
 
   def setIt: Actor.Receive = {
-    case SetOp(_, v) ⇒ _value = v
+    case SetValue(_, v) ⇒ _value = v
   }
 
   def storeAndResetIt: Actor.Receive = {
-    case FlushOp(_, t) => {
+    case Flush(_, t) ⇒ {
       store(t, _value);
       reset
     }
   }
 
   def storeIt: Actor.Receive = {
-    case FlushOp(_, t) => store(t, _value)
+    case Flush(_, t) ⇒ store(t, _value)
   }
 }
-
 
 /**
  * Stores a metric along with it's timestamp
@@ -163,7 +163,6 @@ trait MetricStore[T] {
     _store = (time, value) +: _store
   }
 }
-
 
 class CounterAggregatorWorkerActor extends Actor with LongValueAggregator with MetricStore[Long] {
   def receive = incrementIt orElse storeAndResetIt
@@ -184,8 +183,8 @@ class DistinctAggregatorWorkerActor extends Actor with MetricStore[Long] {
   def value = set.size: Long
 
   def receive = {
-    case SetOp(_, v) ⇒ set = set + v
-    case FlushOp(_, t) => {
+    case SetValue(_, v) ⇒ set = set + v
+    case Flush(_, t) ⇒ {
       store(t, value);
       set = Set()
     }
