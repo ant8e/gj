@@ -1,10 +1,11 @@
-import Messages.{BucketListResponse, BucketListQuery, SingleMetricRawString, PossiblyMultipleMetricRawString}
-import MetricOperation.{SetValue, Increment, Flush}
-import MetricStyle.{Distinct, Gauge, Timing, Counter}
-import akka.actor.{Props, ActorLogging, Actor}
+import Messages.{ BucketListResponse, BucketListQuery, SingleMetricRawString, PossiblyMultipleMetricRawString }
+import MetricOperation.{ SetValue, Increment, Flush }
+import MetricStyle.{ Distinct, Gauge, Timing, Counter }
+import akka.actor.{ Props, ActorLogging, Actor }
 import akka.io.Udp
 import akka.routing.RoundRobinRouter
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
+import scala.language.postfixOps
 
 //Messages
 object Messages {
@@ -13,7 +14,7 @@ object Messages {
 
   case class SingleMetricRawString(s: String)
   case class BucketListQuery()
-  case class BucketListResponse(buckets : Iterable[String])
+  case class BucketListResponse(buckets: Iterable[String])
 
 }
 
@@ -47,12 +48,11 @@ class MetricCoordinatorActor extends Actor with ActorLogging {
 
   override def postStop() = tick.cancel()
 
-
   def receive = {
     case m: PossiblyMultipleMetricRawString ⇒ splitter ! m
     case m: SingleMetricRawString ⇒ decoder ! m
     case m: MetricOperation with MetricStyle ⇒ aggregator ! m
-    case "tick" => aggregator ! MetricOperation.Flush
+    case "tick" ⇒ aggregator ! MetricOperation.Flush
   }
 }
 
@@ -123,7 +123,7 @@ class MetricAggregatorActor extends Actor {
       val child = context.child(name).getOrElse(context.actorOf(Props(buildActor(m)), name))
       child ! m
     }
-    case m : BucketListQuery => sender ! BucketListResponse(buckets)
+    case m: BucketListQuery ⇒ sender ! BucketListResponse(buckets)
   }
 
   private def metricActorName(m: MetricOperation with MetricStyle) = m.styleTag + "." + m.bucket.name
