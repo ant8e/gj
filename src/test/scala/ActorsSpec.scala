@@ -1,4 +1,4 @@
-
+package net.antoinecomte.gj
 
 import Messages._
 import MetricOperation.{ Flush, SetValue, Increment }

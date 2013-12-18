@@ -1,4 +1,4 @@
-
+package net.antoinecomte.gj
 import java.net.InetSocketAddress
 import scala.concurrent.duration._
 import akka.pattern.ask

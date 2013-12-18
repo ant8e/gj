@@ -1,3 +1,4 @@
+package net.antoinecomte.gj
 
 /**
  * A Metric bucket

@@ -1,3 +1,5 @@
+package net.antoinecomte.gj
+
 import Messages.{ BucketListResponse, BucketListQuery, SingleMetricRawString, PossiblyMultipleMetricRawString }
 import MetricOperation.{ SetValue, Increment, Flush }
 import MetricStyle.{ Distinct, Gauge, Timing, Counter }
@@ -13,7 +15,9 @@ object Messages {
   case class PossiblyMultipleMetricRawString(s: String)
 
   case class SingleMetricRawString(s: String)
+
   case class BucketListQuery()
+
   case class BucketListResponse(buckets: Iterable[String])
 
 }
@@ -133,8 +137,9 @@ class MetricAggregatorActor extends Actor {
    * @param s the metric style
    * @return the corresponding actor
    */
+  type impl = InMemoryMetricStore
   private def buildActor(s: MetricStyle): Actor = s match {
-    case _: Counter ⇒ new CounterAggregatorWorkerActor
+    case _: Counter ⇒ new CounterAggregatorWorkerActor with impl
     case _: Timing ⇒ new TimingAggregatorWorkerActor
     case _: Gauge ⇒ new GaugeAggregatorWorkerActor
     case _: Distinct ⇒ new DistinctAggregatorWorkerActor
@@ -176,28 +181,36 @@ trait LongValueAggregator {
  * Stores a metric along with it's timestamp
  * @tparam T the type of the metric
  */
-trait MetricStore[T] {
-  private[this] var _store = Vector[(Long, T)]()
+abstract trait MetricStore[T] {
+  type TimeStamp = Long
 
-  def store(time: Long, value: T) = {
-    _store = (time, value) +: _store
+  def store(time: TimeStamp, value: T): Unit
+}
+
+trait InMemoryMetricStore[T] extends MetricStore[T] {
+  private[this] var _store = Vector[InMemoryMetricData[T]]()
+
+  case class InMemoryMetricData[T](t: TimeStamp, data: T)
+
+  def store(time: TimeStamp, value: T) = {
+    _store = InMemoryMetricData(time, value) +: _store
   }
 }
 
-class CounterAggregatorWorkerActor extends Actor with LongValueAggregator with MetricStore[Long] {
+abstract class CounterAggregatorWorkerActor extends Actor with LongValueAggregator with MetricStore[Long] {
   def receive = incrementIt orElse storeAndResetIt
 }
 
-class GaugeAggregatorWorkerActor extends Actor with LongValueAggregator with MetricStore[Long] {
+abstract class GaugeAggregatorWorkerActor extends Actor with LongValueAggregator with MetricStore[Long] {
   def receive = incrementIt orElse setIt orElse storeIt
 
 }
 
-class TimingAggregatorWorkerActor extends Actor with LongValueAggregator with MetricStore[Long] {
+abstract class TimingAggregatorWorkerActor extends Actor with LongValueAggregator with MetricStore[Long] {
   def receive = setIt orElse storeAndResetIt
 }
 
-class DistinctAggregatorWorkerActor extends Actor with MetricStore[Long] {
+abstract class DistinctAggregatorWorkerActor extends Actor with MetricStore[Long] {
   private[this] var set = Set[Int]()
 
   def value = set.size: Long
