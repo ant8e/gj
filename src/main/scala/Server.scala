@@ -1,3 +1,4 @@
+package gj
 
 import java.net.InetSocketAddress
 import scala.concurrent.duration._

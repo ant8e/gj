@@ -1,20 +1,34 @@
-import Messages.{ BucketListResponse, BucketListQuery, SingleMetricRawString, PossiblyMultipleMetricRawString }
-import MetricOperation.{ SetValue, Increment, Flush }
-import MetricStyle.{ Distinct, Gauge, Timing, Counter }
-import akka.actor.{ Props, ActorLogging, Actor }
+package gj
+
+import Messages._
+import Messages.BucketListQuery
+import Messages.BucketListResponse
+import Messages.MetricRawString
+import Messages.SingleMetricRawString
+import MetricOperation.{SetValue, Increment, Flush}
+import MetricStyle.{Distinct, Gauge, Timing, Counter}
+import akka.actor.{ActorRef, Props, ActorLogging, Actor}
 import akka.io.Udp
 import akka.routing.RoundRobinRouter
-import scala.util.{ Failure, Success, Try }
+import scala.util.{Failure, Success, Try}
 import scala.language.postfixOps
 
-//Messages
+/**
+ * Messages
+ */
 object Messages {
 
-  case class PossiblyMultipleMetricRawString(s: String)
+  type MetricMessage = MetricOperation with MetricStyle
+
+  case class MetricRawString(s: String)
 
   case class SingleMetricRawString(s: String)
-  case class BucketListQuery()
+
+  object BucketListQuery
+
   case class BucketListResponse(buckets: Iterable[String])
+
+  object Tick
 
 }
 
@@ -23,11 +37,11 @@ object Messages {
  */
 class MetricServerActor extends Actor with ActorLogging {
   // Metric Handler
-  val handler = context.actorOf(Props[MetricCoordinatorActor])
+  val handler = context.actorOf(MetricCoordinatorActor.props)
 
   def receive = {
     // transform the UDP payload to an UTF-8 String and send it to a decoder
-    case Udp.Received(data, _) ⇒ handler ! PossiblyMultipleMetricRawString((data.decodeString("UTF-8")))
+    case Udp.Received(data, _) ⇒ handler ! MetricRawString((data.utf8String))
   }
 
 }
@@ -35,40 +49,54 @@ class MetricServerActor extends Actor with ActorLogging {
 /**
  * Coordination actors, that routes messages to the various Actors
  */
+object MetricCoordinatorActor {
+  def props = Props[MetricCoordinatorActor]
+}
+
 class MetricCoordinatorActor extends Actor with ActorLogging {
 
-  val splitter = context.actorOf(Props[MessageSplitterActor].withRouter(RoundRobinRouter(5)))
-  val decoder = context.actorOf(Props[MetricDecoderActor].withRouter(RoundRobinRouter(5)))
-  val aggregator = context.actorOf(Props[MetricAggregatorActor].withRouter(RoundRobinRouter(5)))
-
+  import context._
   import scala.concurrent.duration._
-  import context.dispatcher
 
-  val tick = context.system.scheduler.schedule(500 millis, 1000 millis, self, "tick")
+  val decoder = actorOf(MetricDecoderActor.props)
+  val splitter = actorOf(MessageSplitterActor.props(decoder))
+  val aggregator = actorOf(MetricAggregatorActor.props)
 
-  override def postStop() = tick.cancel()
+  val tick = system.scheduler.schedule(500 millis, 1000 millis, self, Messages.Tick)
 
   def receive = {
-    case m: PossiblyMultipleMetricRawString ⇒ splitter ! m
+    case m: MetricRawString ⇒ splitter ! m
     case m: SingleMetricRawString ⇒ decoder ! m
-    case m: MetricOperation with MetricStyle ⇒ aggregator ! m
-    case "tick" ⇒ aggregator ! MetricOperation.Flush
+    case m: MetricMessage ⇒ aggregator ! m
+    case Tick ⇒ aggregator ! MetricOperation.Flush
   }
+
+  override def postStop() = tick.cancel()
 }
 
 /**
  * Actor used to split incoming message into their single form
  */
-class MessageSplitterActor extends Actor {
+object MessageSplitterActor {
+  def props(decoder: ActorRef): Props = Props(classOf[MessageSplitterActor], decoder).withRouter(RoundRobinRouter(5))
+}
+
+class MessageSplitterActor(decoder: ActorRef) extends Actor {
 
   def receive = {
-    case PossiblyMultipleMetricRawString(s) ⇒ s.lines.foreach(sm ⇒ sender ! SingleMetricRawString(sm))
+    case MetricRawString(s) ⇒ s.lines.foreach {
+      decoder ! SingleMetricRawString(_)
+    }
   }
 }
 
 /**
  * This actor decodes a raw metric representation into a MetricOP with an associated MetricStyle
  */
+object MetricDecoderActor {
+  def props: Props = Props[MetricDecoderActor].withRouter(RoundRobinRouter(5))
+}
+
 class MetricDecoderActor extends Actor with ActorLogging {
 
   def receive = {
@@ -88,7 +116,7 @@ class MetricDecoderActor extends Actor with ActorLogging {
    * @param rawString the metric string
    * @return  Success if everything went right Failure instead
    */
-  private def parse(rawString: String): Try[MetricOperation with MetricStyle] = Try {
+  private def parse(rawString: String): Try[MetricMessage] = Try {
     //TODO support counter sampling param
     val ParsingRegExp(bucket, value, style, _) = rawString.trim
     val b = SimpleBucket(bucket)
@@ -112,37 +140,44 @@ class MetricDecoderActor extends Actor with ActorLogging {
 /**
  * Dispatch all Metric operation to the corresponding aggregator (creates it if needed)
  */
+object MetricAggregatorActor {
+  def props: Props = Props[MetricAggregatorActor].withRouter(RoundRobinRouter(5))
+}
+
 class MetricAggregatorActor extends Actor {
+
+  import context._
 
   private var buckets = Set[String]()
 
   def receive = {
-    case m: MetricOperation with MetricStyle ⇒ {
+    case m: MetricMessage ⇒ {
       val name: String = metricActorName(m)
       buckets = buckets + name
-      val child = context.child(name).getOrElse(context.actorOf(Props(buildActor(m)), name))
+      val child = context.child(name).getOrElse(actorOf(buildActor(m), name))
       child ! m
     }
-    case m: BucketListQuery ⇒ sender ! BucketListResponse(buckets)
+    case BucketListQuery ⇒ sender ! BucketListResponse(buckets)
   }
 
-  private def metricActorName(m: MetricOperation with MetricStyle) = m.styleTag + "." + m.bucket.name
+
+  private def metricActorName(m: MetricMessage) = s"${m.styleTag}.${m.bucket.name}"
 
   /**
    * Build the AggregatorWorkerActor corresponding to the metric style
    * @param s the metric style
    * @return the corresponding actor
    */
-  private def buildActor(s: MetricStyle): Actor = s match {
-    case _: Counter ⇒ new CounterAggregatorWorkerActor
-    case _: Timing ⇒ new TimingAggregatorWorkerActor
-    case _: Gauge ⇒ new GaugeAggregatorWorkerActor
-    case _: Distinct ⇒ new DistinctAggregatorWorkerActor
+  private def buildActor(s: MetricStyle): Props = s match {
+    case _: Counter ⇒ Props[CounterAggregatorWorkerActor]
+    case _: Timing ⇒ Props[TimingAggregatorWorkerActor]
+    case _: Gauge ⇒ Props[GaugeAggregatorWorkerActor]
+    case _: Distinct ⇒ Props[DistinctAggregatorWorkerActor]
   }
 }
 
 /**
- * This trait maintains a long variable and defines partial Receive function to act on that value
+ * This trait maintains a long variable and defines a partial Receive function to act on that value
  */
 trait LongValueAggregator {
   self: MetricStore[Long] with Actor ⇒
@@ -152,22 +187,22 @@ trait LongValueAggregator {
 
   private[this] def reset = _value = 0
 
-  def incrementIt: Actor.Receive = {
+  def incrementIt: Receive = {
     case Increment(_, v) ⇒ _value = _value + v
   }
 
-  def setIt: Actor.Receive = {
+  def setIt: Receive = {
     case SetValue(_, v) ⇒ _value = v
   }
 
-  def storeAndResetIt: Actor.Receive = {
+  def storeAndResetIt: Receive = {
     case Flush(_, t) ⇒ {
       store(t, _value);
       reset
     }
   }
 
-  def storeIt: Actor.Receive = {
+  def storeIt: Receive = {
     case Flush(_, t) ⇒ store(t, _value)
   }
 }

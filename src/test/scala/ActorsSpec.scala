@@ -1,12 +1,13 @@
 
+package gj
 
 import Messages._
-import MetricOperation.{ Flush, SetValue, Increment }
-import MetricStyle.{ Distinct, Gauge, Timing, Counter }
+import MetricOperation.{Flush, SetValue, Increment}
+import MetricStyle.{Distinct, Gauge, Timing, Counter}
 import akka.actor.ActorSystem
 import akka.util.Timeout
 import org.scalatest.FunSpec
-import akka.testkit.{ ImplicitSender, TestKit, TestActorRef }
+import akka.testkit.{ImplicitSender, TestKit, TestActorRef}
 import akka.pattern.ask
 import org.scalatest.matchers.MustMatchers
 import scala.concurrent.duration._
@@ -19,17 +20,16 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
   implicit val tout = Timeout(1 second)
   describe("Message splitter actor") {
     it("should split a multiple metric  string and emit several SingleMetricRawString") {
-      val ref = TestActorRef(new MessageSplitterActor)
-      ref ! PossiblyMultipleMetricRawString("aaa\nbbb")
+      val ref = TestActorRef(new MessageSplitterActor(self))
+      ref ! MetricRawString("aaa\nbbb")
       expectMsgAllConformingOf(1 second, classOf[SingleMetricRawString], classOf[SingleMetricRawString]) must be(Seq(SingleMetricRawString("aaa"), SingleMetricRawString("bbb")))
 
     }
 
     it("should handle a single metric  string and emit one SingleMetricRawString") {
-      val ref = TestActorRef(new MessageSplitterActor)
-      val future = ref ? PossiblyMultipleMetricRawString("aaa")
-      val Success(v: SingleMetricRawString) = future.value.get
-      v must be(SingleMetricRawString("aaa"))
+      val ref = TestActorRef(new MessageSplitterActor(self))
+      ref ! MetricRawString("aaa")
+      expectMsg(SingleMetricRawString("aaa"))
     }
 
   }
@@ -168,7 +168,7 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
   describe("Metric Aggregator Actor") {
     it("should start with an empty list of active buckets") {
       val ref = TestActorRef(new MetricAggregatorActor)
-      val future = ref ? Messages.BucketListQuery()
+      val future = ref ? Messages.BucketListQuery
       val Success(v: Messages.BucketListResponse) = future.value.get
       v.buckets must have size (0)
     }
@@ -176,7 +176,7 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
     it("should maintain a list of active buckets") {
       val ref = TestActorRef(new MetricAggregatorActor)
       ref ! new SetValue(b, 1) with Gauge
-      val future = ref ? Messages.BucketListQuery()
+      val future = ref ? Messages.BucketListQuery
       val Success(v: Messages.BucketListResponse) = future.value.get
       v.buckets must have size (1)
       v.buckets must contain("G." + b.name)
