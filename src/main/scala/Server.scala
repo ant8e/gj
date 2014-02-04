@@ -3,7 +3,7 @@ package gj
 import java.net.InetSocketAddress
 import scala.concurrent.duration._
 import akka.pattern.ask
-import akka.io.{ Udp, IO }
+import akka.io.{Udp, IO}
 import akka.util.Timeout
 import akka.actor._
 
@@ -16,7 +16,7 @@ object Main extends App {
   implicit val system = ActorSystem("metric-server")
 
   // and our actual server "service" actor
-  val server = system.actorOf(Props[MetricServerActor], name = "metric-server")
+  val server = system.actorOf(Props[MetricUdpListener], name = "metric-server")
 
   // we bind the server to a port on localhost and hook
   // in a continuation that informs us when bound

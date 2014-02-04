@@ -35,13 +35,13 @@ object Messages {
 /**
  * Listen to UDP messages and fed them to the decoding actors
  */
-class MetricServerActor extends Actor with ActorLogging {
+class MetricUdpListener extends Actor with ActorLogging {
   // Metric Handler
   val handler = context.actorOf(MetricCoordinatorActor.props)
 
   def receive = {
     // transform the UDP payload to an UTF-8 String and send it to a decoder
-    case Udp.Received(data, _) ⇒ handler ! MetricRawString((data.utf8String))
+    case Udp.Received(data, send) ⇒ log.debug("received {} from {}", data.utf8String, send.getAddress.toString); handler ! MetricRawString((data.utf8String))
   }
 
 }
@@ -62,11 +62,11 @@ class MetricCoordinatorActor extends Actor with ActorLogging {
   val splitter = actorOf(MessageSplitterActor.props(decoder))
   val aggregator = actorOf(MetricAggregatorActor.props)
 
-  val tick = system.scheduler.schedule(500 millis, 1000 millis, self, Messages.Tick)
+  val tick = system.scheduler.schedule(500.millis, 1.seconds, self, Messages.Tick)
 
   def receive = {
     case m: MetricRawString ⇒ splitter ! m
-    case m: SingleMetricRawString ⇒ decoder ! m
+    case m: SingleMetricRawString ⇒ log.debug("received {}", m.s); decoder ! m
     case m: MetricMessage ⇒ aggregator ! m
     case Tick ⇒ aggregator ! MetricOperation.Flush
   }
@@ -75,7 +75,7 @@ class MetricCoordinatorActor extends Actor with ActorLogging {
 }
 
 /**
- * Actor used to split incoming message into their single form
+ * This Actor splits incoming message into their single form
  */
 object MessageSplitterActor {
   def props(decoder: ActorRef): Props = Props(classOf[MessageSplitterActor], decoder).withRouter(RoundRobinRouter(5))
