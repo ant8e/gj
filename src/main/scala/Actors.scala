@@ -5,20 +5,18 @@ import Messages.BucketListQuery
 import Messages.BucketListResponse
 import Messages.MetricRawString
 import Messages.SingleMetricRawString
-import MetricOperation.{SetValue, Increment, Flush}
-import MetricStyle.{Distinct, Gauge, Timing, Counter}
 import akka.actor.{ActorRef, Props, ActorLogging, Actor}
 import akka.io.Udp
 import akka.routing.RoundRobinRouter
 import scala.util.{Failure, Success, Try}
 import scala.language.postfixOps
+import akka.event.{LookupClassification, ActorEventBus}
 
 /**
  * Messages
  */
 object Messages {
 
-  type MetricMessage = MetricOperation with MetricStyle
 
   case class MetricRawString(s: String)
 
@@ -67,8 +65,8 @@ class MetricCoordinatorActor extends Actor with ActorLogging {
   def receive = {
     case m: MetricRawString ⇒ splitter ! m
     case m: SingleMetricRawString ⇒ log.debug("received {}", m.s); decoder ! m
-    case m: MetricMessage ⇒ aggregator ! m
-    case Tick ⇒ aggregator ! MetricOperation.Flush
+    case m: MetricOperation[_] ⇒ aggregator ! m
+    case Tick ⇒ aggregator ! Flush
   }
 
   override def postStop() = tick.cancel()
@@ -116,22 +114,22 @@ class MetricDecoderActor extends Actor with ActorLogging {
    * @param rawString the metric string
    * @return  Success if everything went right Failure instead
    */
-  private def parse(rawString: String): Try[MetricMessage] = Try {
+  private def parse(rawString: String): Try[MetricOperation[_]] = Try {
     //TODO support counter sampling param
     val ParsingRegExp(bucket, value, style, _) = rawString.trim
     val b = SimpleBucket(bucket)
-    val v: Int = if (value(0) == '+')
-      value.drop(1).toInt // Java 1.6 does not handle the + sign, later version do
-    else value.toInt
+    val v: Long = if (value(0) == '+')
+      value.drop(1).toLong // Java 1.6 does not handle the + sign, later version do
+    else value.toLong
 
     style match {
-      case "c" ⇒ new Increment(b, v) with Counter
-      case "ms" ⇒ new SetValue(b, v) with Timing
+      case "c" ⇒ Increment[LongCounter](LongCounter(b), v)
+      case "ms" ⇒ SetValue[LongTiming](LongTiming(b), v)
       case "g" ⇒ value match {
-        case SignedDigit() ⇒ new Increment(b, v) with Gauge
-        case _ ⇒ new SetValue(b, v) with Gauge
+        case SignedDigit() ⇒ Increment[LongGauge](LongGauge(b), v)
+        case _ ⇒ new SetValue[LongGauge](LongGauge(b), v)
       }
-      case "s" ⇒ new SetValue(b, v) with Distinct
+      case "s" ⇒ new SetValue[LongDistinct](LongDistinct(b), v) with Distinct
 
     }
   }
@@ -151,17 +149,17 @@ class MetricAggregatorActor extends Actor {
   private var buckets = Set[String]()
 
   def receive = {
-    case m: MetricMessage ⇒ {
-      val name: String = metricActorName(m)
+    case m: MetricOperation[_] ⇒ {
+      val name: String = metricActorName(m.metric)
       buckets = buckets + name
-      val child = context.child(name).getOrElse(actorOf(buildActor(m), name))
+      val child = context.child(name).getOrElse(actorOf(buildActor(m.metric), name))
       child ! m
     }
     case BucketListQuery ⇒ sender ! BucketListResponse(buckets)
   }
 
 
-  private def metricActorName(m: MetricMessage) = s"${m.styleTag}.${m.bucket.name}"
+  private def metricActorName(m: Metric) = s"${m.styleTag}.${m.bucket.name}"
 
   /**
    * Build the AggregatorWorkerActor corresponding to the metric style
@@ -179,25 +177,29 @@ class MetricAggregatorActor extends Actor {
 /**
  * This trait maintains a long variable and defines a partial Receive function to act on that value
  */
-trait LongValueAggregator {
-  self: MetricStore[Long] with Actor ⇒
-  protected[this] var _value: Long = 0
+trait LongValueAggregator[T] {
+  self: MetricStore[T] with Actor ⇒
+  def resetValue: T
+
+  def plus(v1: T, v2: T): T
+
+  protected[this] var _value: T = resetValue
 
   def value = _value
 
-  private[this] def reset = _value = 0
+  private[this] def reset = _value = resetValue
 
   def incrementIt: Receive = {
-    case Increment(_, v) ⇒ _value = _value + v
+    case Increment(_, v: T) ⇒ _value = plus(_value, v)
   }
 
   def setIt: Receive = {
-    case SetValue(_, v) ⇒ _value = v
+    case SetValue(_, v: T) ⇒ _value = v
   }
 
   def storeAndResetIt: Receive = {
     case Flush(_, t) ⇒ {
-      store(t, _value);
+      store(t, _value)
       reset
     }
   }
@@ -219,23 +221,34 @@ trait MetricStore[T] {
   }
 }
 
-class CounterAggregatorWorkerActor extends Actor with LongValueAggregator with MetricStore[Long] {
+class CounterAggregatorWorkerActor extends Actor with LongValueAggregator[LongCounter#Value] with MetricStore[LongCounter#Value] {
   def receive = incrementIt orElse storeAndResetIt
+
+  def resetValue: LongCounter#Value = 0
+
+  def plus(v1: LongCounter#Value, v2: LongCounter#Value): LongCounter#Value = v1 + v2
 }
 
-class GaugeAggregatorWorkerActor extends Actor with LongValueAggregator with MetricStore[Long] {
+class GaugeAggregatorWorkerActor extends Actor with LongValueAggregator[LongGauge#Value] with MetricStore[LongGauge#Value] {
   def receive = incrementIt orElse setIt orElse storeIt
 
+  def resetValue: LongGauge#Value = 0
+
+  def plus(v1: LongGauge#Value, v2: LongGauge#Value): LongGauge#Value = v1 + v2
 }
 
-class TimingAggregatorWorkerActor extends Actor with LongValueAggregator with MetricStore[Long] {
+class TimingAggregatorWorkerActor extends Actor with LongValueAggregator[LongTiming#Value] with MetricStore[LongTiming#Value] {
   def receive = setIt orElse storeAndResetIt
+
+  def resetValue: LongTiming#Value = 0
+
+  def plus(v1: LongTiming#Value, v2: LongTiming#Value): LongTiming#Value = v1 + v2
 }
 
-class DistinctAggregatorWorkerActor extends Actor with MetricStore[Long] {
-  private[this] var set = Set[Int]()
+class DistinctAggregatorWorkerActor extends Actor with MetricStore[LongDistinct#Value] {
+  private[this] var set = Set[Any]()
 
-  def value = set.size: Long
+  def value = set.size
 
   def receive = {
     case SetValue(_, v) ⇒ set = set + v
@@ -247,3 +260,16 @@ class DistinctAggregatorWorkerActor extends Actor with MetricStore[Long] {
   }
 }
 
+case class toto(s: String)
+
+class MyEventBus extends ActorEventBus with LookupClassification {
+  type Event = toto
+  type Classifier = String
+
+  protected def classify(event: Event): Classifier = event.s
+
+
+  protected def mapSize(): Int = 36
+
+  protected def publish(event: Event, subscriber: Subscriber): Unit = subscriber ! event
+}
