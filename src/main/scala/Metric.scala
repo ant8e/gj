@@ -94,7 +94,7 @@ sealed case class LongDistinct(bucket: Bucket) extends Metric with Distinct with
  * @param value
  * @tparam M
  */
-sealed case class MetricValueAt[+M <: Metric](metric: M, timestamp: Long, value: M#Value)
+sealed case class MetricValueAt[M <: Metric](metric: M, timestamp: Long, value: M#Value)
 
 /**
  * Operations on Metrics
