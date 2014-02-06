@@ -155,6 +155,7 @@ class MetricAggregatorActor extends Actor {
   import context._
 
   private var metricActors = Map[Metric, ActorRef]()
+  private val valueBus = new ValuesEventBus
 
   def receive = {
     case m: MetricOperation[_] ⇒ {
@@ -168,13 +169,13 @@ class MetricAggregatorActor extends Actor {
           }
         }
       }
-
       child ! m
     }
-    case BucketListQuery ⇒ sender ! BucketListResponse(metricActors.keys.map(metricActorName(_)))
+    case BucketListQuery ⇒ sender ! BucketListResponse(metricActors.keys.map(metricActorName))
     case sp@StartPublish(m) => metricActors.get(m).foreach(_ forward sp)
     case sp@StopPublish(m) => metricActors.get(m).foreach(_ forward sp)
-    case FlushAll => metricActors.foreach( p=> p._2 ! Flush(p._1,0) )
+    case FlushAll => metricActors.foreach( p=> p._2 ! Flush(p._1,0))
+    case x: MetricValueAt[_] => valueBus.publish(x)
   }
 
 
@@ -295,14 +296,12 @@ class DistinctAggregatorWorkerActor(val metric: LongDistinct) extends Actor with
   }
 }
 
-case class toto(s: String)
 
-class MyEventBus extends ActorEventBus with LookupClassification {
-  type Event = toto
-  type Classifier = String
+class ValuesEventBus extends ActorEventBus with LookupClassification {
+  type Event = MetricValueAt[_<:Metric]
+  type Classifier = Metric
 
-  protected def classify(event: Event): Classifier = event.s
-
+  protected def classify(event: Event): Classifier = event.metric
 
   protected def mapSize(): Int = 36
 
