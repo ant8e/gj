@@ -18,5 +18,5 @@ scalariformSettings
 
 ScalariformKeys.preferences := FormattingPreferences()
   .setPreference(AlignParameters, true)
-  .setPreference( RewriteArrowSymbols,true)
+  .setPreference(RewriteArrowSymbols, true)
   .setPreference(PreserveDanglingCloseParenthesis, false)
