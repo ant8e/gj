@@ -1,8 +1,7 @@
 package gj
 
-import akka.actor.{ActorRef, Actor, Props}
+import akka.actor.{ ActorRef, Actor, Props }
 import scala.Some
-import Messages._
 
 /**
  * Dispatch all Metric operation to the corresponding aggregator (creates it if needed)
@@ -33,8 +32,8 @@ class MetricRepository extends Actor {
     case m: MetricOperation[_] ⇒ {
       val child = {
         metricActors.get(m.metric) match {
-          case Some(c) => c
-          case None => {
+          case Some(c) ⇒ c
+          case None ⇒ {
             val ret = actorOf(buildMetricActor(m.metric), metricActorName(m.metric))
             metricActors = metricActors + (m.metric -> ret)
             ret
@@ -44,12 +43,11 @@ class MetricRepository extends Actor {
       child ! m
     }
     case BucketListQuery ⇒ sender ! BucketListResponse(metricActors.keys.map(metricActorName))
-    case sp@StartPublish(m) => metricActors.get(m).foreach(_ forward sp)
-    case sp@StopPublish(m) => metricActors.get(m).foreach(_ forward sp)
-    case FlushAll => metricActors.foreach(p => p._2 ! Flush(p._1, 0))
+    case sp @ StartPublish(m) ⇒ metricActors.get(m).foreach(_ forward sp)
+    case sp @ StopPublish(m) ⇒ metricActors.get(m).foreach(_ forward sp)
+    case FlushAll ⇒ metricActors.foreach(p ⇒ p._2 ! Flush(p._1, 0))
 
   }
-
 
   private def metricActorName(m: Metric) = s"${m.styleTag}.${m.bucket.name}"
 
@@ -102,7 +100,6 @@ trait LongValueAggregator[T <: Metric] {
 
   }
 
-
   def storeIt: Receive = {
     case Flush(_, t) ⇒
       store(t, _value)
@@ -113,8 +110,8 @@ trait LongValueAggregator[T <: Metric] {
   var pub: Option[ActorRef] = None
 
   def publishIt: Receive = {
-    case m: StartPublish => pub = Some(sender)
-    case m: StopPublish => pub = None
+    case m: StartPublish ⇒ pub = Some(sender)
+    case m: StopPublish ⇒ pub = None
   }
 
   def publish = pub.foreach(_ ! MetricValueAt[T](metric, 0, _value))
@@ -170,5 +167,4 @@ class DistinctAggregatorWorkerActor(val metric: LongDistinct) extends Actor with
 
   }
 }
-
 

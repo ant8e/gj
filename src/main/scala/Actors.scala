@@ -9,7 +9,6 @@ import scala.language.postfixOps
 import scala.util.Failure
 import scala.util.Success
 
-
 /**
  * Listen to UDP messages and fed them to the decoding actors
  */
@@ -64,7 +63,6 @@ object RawMetricHandler {
 
   def props(repo: ActorRef) = Props(new RawMetricHandler(repo))
 }
-
 
 /**
  * This Actor splits incoming message into their single form

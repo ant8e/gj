@@ -1,6 +1,5 @@
 package gj
 
-
 /**
  * A Metric bucket
  */
@@ -16,7 +15,6 @@ case class LeafBucket(leafName: String, parent: HierarchicalBucket) extends Hier
 
 case class NodeBucket(leafName: String, parent: Option[HierarchicalBucket], children: Seq[HierarchicalBucket]) extends HierarchicalBucket
 
-
 /**
  * Metric style indicate the meaning of a metric
  */
@@ -28,7 +26,6 @@ sealed abstract trait MetricStyle {
   val styleTag: String
 
 }
-
 
 /**
  * A gauge is a value that changes over time,
@@ -62,7 +59,6 @@ trait Timing extends MetricStyle {
 trait Distinct extends MetricStyle {
   val styleTag = "D"
 }
-
 
 trait MetricType {
   type Value
@@ -102,7 +98,6 @@ sealed case class MetricValueAt[M <: Metric](metric: M, timestamp: Long, value: 
 sealed abstract class MetricOperation[+T <: Metric] {
   val metric: T
 }
-
 
 /**
  * Increment Operation increase (or decrease the value of metric)

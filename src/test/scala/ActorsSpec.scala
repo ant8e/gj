@@ -1,11 +1,11 @@
 
 package gj
 
-import gj.ValuesProvider.{UnSubscribe, Subscribe}
+import gj.ValuesProvider.{ UnSubscribe, Subscribe }
 import akka.actor.ActorSystem
 import akka.util.Timeout
 import org.scalatest.FunSpec
-import akka.testkit.{ImplicitSender, TestKit, TestActorRef}
+import akka.testkit.{ ImplicitSender, TestKit, TestActorRef }
 import akka.pattern.ask
 import org.scalatest.matchers.MustMatchers
 import scala.concurrent.duration._
@@ -193,7 +193,7 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
       ref ! SetValue[LongGauge](gauge, 1)
       ref ! StartPublish(gauge)
       ref ! FlushAll
-      expectMsgPF(100.millisecond){case  MetricValueAt(`gauge`,_,1) => ()}
+      expectMsgPF(100.millisecond) { case MetricValueAt(`gauge`, _, 1) ⇒ () }
 
     }
 
@@ -202,35 +202,35 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
       ref ! SetValue[LongGauge](gauge, 1)
       ref ! StartPublish(gauge)
       ref ! FlushAll
-      expectMsgPF(100.millisecond){case  MetricValueAt(`gauge`,_,1) => ()}
+      expectMsgPF(100.millisecond) { case MetricValueAt(`gauge`, _, 1) ⇒ () }
       ref ! StopPublish(gauge)
       ref ! FlushAll
-      expectNoMsg (100.millisecond)
+      expectNoMsg(100.millisecond)
     }
 
   }
 
-  describe("Metric Values provider Actor"){
-    it("should start publishing on Subsribe"){
+  describe("Metric Values provider Actor") {
+    it("should start publishing on Subsribe") {
 
       val agreg = TestActorRef(new MetricRepository)
-      val ref =TestActorRef( ValuesProvider.props(agreg))
+      val ref = TestActorRef(ValuesProvider.props(agreg))
       agreg ! SetValue[LongGauge](gauge, 1)
       ref ! Subscribe(gauge)
       agreg ! FlushAll
-      expectMsgPF(100.millisecond){case  MetricValueAt(`gauge`,_,1) => ()}
+      expectMsgPF(100.millisecond) { case MetricValueAt(`gauge`, _, 1) ⇒ () }
     }
-    it("should stop publishing on UnSubsribe"){
+    it("should stop publishing on UnSubsribe") {
 
       val agreg = TestActorRef(new MetricRepository)
-      val ref =TestActorRef( ValuesProvider.props(agreg))
+      val ref = TestActorRef(ValuesProvider.props(agreg))
       agreg ! SetValue[LongGauge](gauge, 1)
       ref ! Subscribe(gauge)
       agreg ! FlushAll
-      expectMsgPF(100.millisecond){case  MetricValueAt(`gauge`,_,1) => ()}
+      expectMsgPF(100.millisecond) { case MetricValueAt(`gauge`, _, 1) ⇒ () }
       ref ! UnSubscribe(gauge)
       agreg ! FlushAll
-      expectNoMsg (100.millisecond)
+      expectNoMsg(100.millisecond)
     }
   }
 

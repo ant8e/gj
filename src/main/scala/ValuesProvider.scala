@@ -1,8 +1,8 @@
 package gj
 
-import akka.event.{LookupClassification, ActorEventBus}
-import gj.ValuesProvider.{UnSubscribe, Subscribe}
-import akka.actor.{Props, ActorRef, Actor}
+import akka.event.{ LookupClassification, ActorEventBus }
+import gj.ValuesProvider.{ UnSubscribe, Subscribe }
+import akka.actor.{ Props, ActorRef, Actor }
 
 /**
  * Actor that provides the values stream
@@ -17,16 +17,17 @@ object ValuesProvider {
 }
 
 class ValuesProvider(val metricActor: ActorRef) extends Actor with ValuesEventBus {
-   MetricRepository
+  MetricRepository
   override def receive: Actor.Receive = {
-    case Subscribe(m) => metricActor ! MetricRepository.StartPublish(m)
+    case Subscribe(m) ⇒
+      metricActor ! MetricRepository.StartPublish(m)
       subscribe(sender, m)
-    case UnSubscribe(m) => unsubscribe(sender, m)
+    case UnSubscribe(m) ⇒
+      unsubscribe(sender, m)
       if (subscriberCount(m) == 0) metricActor ! MetricRepository.StopPublish(m)
-    case x: MetricValueAt[_] => publish(x)
+    case x: MetricValueAt[_] ⇒ publish(x)
   }
 }
-
 
 trait ValuesEventBus extends ActorEventBus with LookupClassification {
   type Event = MetricValueAt[_ <: Metric]

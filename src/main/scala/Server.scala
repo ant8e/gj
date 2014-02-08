@@ -1,9 +1,9 @@
 package gj
 
-import java.net.{InetAddress, InetSocketAddress}
+import java.net.{ InetAddress, InetSocketAddress }
 import scala.concurrent.duration._
 import akka.pattern.ask
-import akka.io.{Udp, IO}
+import akka.io.{ Udp, IO }
 import akka.util.Timeout
 import akka.actor._
 import scala.util.Try
@@ -27,7 +27,7 @@ trait ActorSystemProvider {
 }
 
 trait MetricServer {
-  self: MetricServerConfiguration with ActorSystemProvider =>
+  self: MetricServerConfiguration with ActorSystemProvider ⇒
 
   // we need an ActorSystem to host our application in
   private implicit val system: ActorSystem = actorSystem
@@ -47,11 +47,10 @@ trait MetricServer {
   // we bind the server to a port on the supplied address and hook
   // in a continuation that informs us when bound
   private val endpoint = localAddress match {
-    case Some(a) => new InetSocketAddress(InetAddress.getByName(a), port)
-    case _ => new InetSocketAddress(port)
+    case Some(a) ⇒ new InetSocketAddress(InetAddress.getByName(a), port)
+    case _ ⇒ new InetSocketAddress(port)
   }
   private implicit val bindingTimeout = Timeout(1.second)
-
 
   // execution context for the future
 
