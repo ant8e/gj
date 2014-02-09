@@ -2,7 +2,7 @@ import sbt._
 
 object Dependencies {
 
-  val sprayVersion = "1.2-RC2"
+  val sprayVersion = "1.2.0"
   val akkaVersion = "2.2.3"
 
   val resolvers = Seq(
@@ -13,7 +13,7 @@ object Dependencies {
 
   val spray = Seq("io.spray" % "spray-can" % sprayVersion,
     "io.spray" % "spray-routing" % sprayVersion,
-    "io.spray" %% "spray-json" % "1.2.3")
+    "io.spray" %% "spray-json" % "1.2.5")
 
 
   val akkaActor = "com.typesafe.akka" %% "akka-actor" % akkaVersion
