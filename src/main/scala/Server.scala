@@ -1,5 +1,7 @@
 package gj
 
+import gj.actor.MetricRepository.{ MetricListResponse, MetricListQuery }
+import gj.metric.Metric
 import java.net.{ InetAddress, InetSocketAddress }
 import scala.concurrent.duration._
 import akka.pattern.ask
@@ -7,6 +9,7 @@ import akka.io.{ Udp, IO }
 import akka.util.Timeout
 import akka.actor._
 import gj.actor._
+import scala.concurrent.Future
 
 trait MetricServerConfiguration {
   /**
@@ -59,13 +62,15 @@ trait MetricServer {
   //
   (IO(Udp) ? Udp.Bind(server, endpoint)).onSuccess {
     case Udp.Bound(address) ⇒
-      println("\nBound echo-server to " + address)
+      println("\nBound metric-server to " + address)
 
     case Udp.CommandFailed(c) ⇒ {
       system.log.error("Unable to start " + c.failureMessage.toString)
       //      system.shutdown()
     }
   }
+
+  def listMetrics: Future[Iterable[Metric]] = (repo ? MetricListQuery).map(_.asInstanceOf[MetricListResponse].metrics)
 
 }
 

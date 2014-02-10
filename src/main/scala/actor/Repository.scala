@@ -1,13 +1,13 @@
 package gj.actor
 
-import akka.actor.{ActorRef, Actor, Props}
+import akka.actor.{ ActorLogging, ActorRef, Actor, Props }
 import gj.metric._
 import scala.Some
 
 /**
  * Handle the metric operation, store and aggregate all the metrics
  */
-class MetricRepository extends Actor {
+class MetricRepository extends Actor with ActorLogging {
 
   import context._
   import MetricRepository._
@@ -30,8 +30,8 @@ class MetricRepository extends Actor {
     }
     case BucketListQuery ⇒ sender ! BucketListResponse(metricActors.keys.map(metricActorName))
     case MetricListQuery ⇒ sender ! MetricListResponse(metricActors.keys)
-    case sp@StartPublish(m) ⇒ metricActors.get(m).foreach(_ forward sp)
-    case sp@StopPublish(m) ⇒ metricActors.get(m).foreach(_ forward sp)
+    case sp @ StartPublish(m) ⇒ metricActors.get(m).foreach(_ forward sp)
+    case sp @ StopPublish(m) ⇒ metricActors.get(m).foreach(_ forward sp)
     case FlushAll ⇒ metricActors.foreach(p ⇒ p._2 ! Flush(p._1, 0))
 
   }

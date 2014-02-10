@@ -3,7 +3,7 @@ package gj.actor
 import akka.event.{ LookupClassification, ActorEventBus }
 import ValuesProvider.{ UnSubscribe, Subscribe }
 import akka.actor.{ Props, ActorRef, Actor }
-import gj.metric.{MetricValueAt, Metric}
+import gj.metric.{ MetricValueAt, Metric }
 
 /**
  * Actor that provides the values stream
