@@ -9,7 +9,6 @@ import gj.metric._
 import scala.util.Failure
 import scala.util.Success
 
-
 /**
  * Listen to UDP messages and fed them to the decoding actors
  */
@@ -19,7 +18,7 @@ class MetricUdpListener(val handler: ActorRef) extends Actor with ActorLogging {
 
   def receive = {
     // transform the UDP payload to an UTF-8 String and send it to a decoder
-    case Udp.Received(data, send) ⇒ log.debug("received {} from {}", data.utf8String, send.getAddress.toString); handler ! MetricRawString((data.utf8String))
+    case Udp.Received(data, send) ⇒ handler ! MetricRawString((data.utf8String))
   }
 }
 
@@ -78,7 +77,7 @@ class RawMetricSplitter(decoder: ActorRef) extends Actor {
 
   def receive = {
     case MetricRawString(s) ⇒ s.lines.foreach {
-      decoder ! SingleMetricRawString(_)
+      decoder forward SingleMetricRawString(_)
     }
   }
 }
