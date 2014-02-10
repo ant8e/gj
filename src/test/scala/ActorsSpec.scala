@@ -1,7 +1,8 @@
 
 package gj
 
-import gj.ValuesProvider.{ UnSubscribe, Subscribe }
+import gj.actor._
+import ValuesProvider.{ UnSubscribe, Subscribe }
 import akka.actor.ActorSystem
 import akka.util.Timeout
 import org.scalatest.FunSpec
@@ -9,11 +10,12 @@ import akka.testkit.{ ImplicitSender, TestKit, TestActorRef }
 import akka.pattern.ask
 import org.scalatest.matchers.MustMatchers
 import scala.concurrent.duration._
-import scala.util.Success
 import language.postfixOps
 
 import MetricRepository._
 import RawMetricHandler._
+import metric._
+import scala.util.Success
 
 class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec with ImplicitSender with MustMatchers {
   def this() = this(ActorSystem("ActorsSpec"))
@@ -171,7 +173,7 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
 
   }
 
-  describe("Metric Aggregator Actor") {
+  describe("Metric repository Actor") {
     it("should start with an empty list of active buckets") {
       val ref = TestActorRef(new MetricRepository)
       val future = ref ? BucketListQuery

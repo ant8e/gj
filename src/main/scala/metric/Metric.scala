@@ -1,4 +1,4 @@
-package gj
+package gj.metric
 
 /**
  * A Metric bucket

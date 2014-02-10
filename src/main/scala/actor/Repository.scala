@@ -1,26 +1,12 @@
-package gj
+package gj.actor
 
-import akka.actor.{ ActorRef, Actor, Props }
+import akka.actor.{ActorRef, Actor, Props}
+import gj.metric._
 import scala.Some
 
 /**
- * Dispatch all Metric operation to the corresponding aggregator (creates it if needed)
+ * Handle the metric operation, store and aggregate all the metrics
  */
-object MetricRepository {
-
-  object BucketListQuery
-
-  case class BucketListResponse(buckets: Iterable[String])
-
-  object FlushAll
-
-  case class StartPublish(metric: Metric)
-
-  case class StopPublish(metric: Metric)
-
-  def props: Props = Props[MetricRepository]
-}
-
 class MetricRepository extends Actor {
 
   import context._
@@ -43,8 +29,8 @@ class MetricRepository extends Actor {
       child ! m
     }
     case BucketListQuery ⇒ sender ! BucketListResponse(metricActors.keys.map(metricActorName))
-    case sp @ StartPublish(m) ⇒ metricActors.get(m).foreach(_ forward sp)
-    case sp @ StopPublish(m) ⇒ metricActors.get(m).foreach(_ forward sp)
+    case sp@StartPublish(m) ⇒ metricActors.get(m).foreach(_ forward sp)
+    case sp@StopPublish(m) ⇒ metricActors.get(m).foreach(_ forward sp)
     case FlushAll ⇒ metricActors.foreach(p ⇒ p._2 ! Flush(p._1, 0))
 
   }
@@ -62,6 +48,25 @@ class MetricRepository extends Actor {
     case _: Gauge ⇒ Props(classOf[GaugeAggregatorWorkerActor], s)
     case _: Distinct ⇒ Props(classOf[DistinctAggregatorWorkerActor], s)
   }
+}
+
+object MetricRepository {
+
+  object BucketListQuery
+
+  case class BucketListResponse(buckets: Iterable[String])
+
+  object MetricListQuery
+
+  case class MetricListResponse(metrics: Iterable[Metric])
+
+  object FlushAll
+
+  case class StartPublish(metric: Metric)
+
+  case class StopPublish(metric: Metric)
+
+  def props: Props = Props[MetricRepository]
 }
 
 /**

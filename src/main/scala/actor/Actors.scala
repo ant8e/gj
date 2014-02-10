@@ -1,13 +1,14 @@
-package gj
+package gj.actor
 
-import gj.MetricRepository.FlushAll
 import akka.actor._
 import akka.io.Udp
 import akka.routing.RoundRobinRouter
 import scala.util.Try
 import scala.language.postfixOps
+import gj.metric._
 import scala.util.Failure
 import scala.util.Success
+
 
 /**
  * Listen to UDP messages and fed them to the decoding actors
@@ -47,7 +48,7 @@ class RawMetricHandler(repo: ActorRef) extends Actor with ActorLogging {
     case m: MetricRawString ⇒ splitter ! m
     case m: SingleMetricRawString ⇒ decoder ! m
     case m: MetricOperation[_] ⇒ repo ! m
-    case Tick ⇒ repo ! FlushAll
+    case Tick ⇒ repo ! MetricRepository.FlushAll
   }
 
   override def postStop() = tick.cancel()

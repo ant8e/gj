@@ -6,7 +6,7 @@ import akka.pattern.ask
 import akka.io.{ Udp, IO }
 import akka.util.Timeout
 import akka.actor._
-import scala.util.Try
+import gj.actor._
 
 trait MetricServerConfiguration {
   /**

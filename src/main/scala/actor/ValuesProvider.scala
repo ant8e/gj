@@ -1,8 +1,9 @@
-package gj
+package gj.actor
 
 import akka.event.{ LookupClassification, ActorEventBus }
-import gj.ValuesProvider.{ UnSubscribe, Subscribe }
+import ValuesProvider.{ UnSubscribe, Subscribe }
 import akka.actor.{ Props, ActorRef, Actor }
+import gj.metric.{MetricValueAt, Metric}
 
 /**
  * Actor that provides the values stream
