@@ -189,6 +189,14 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
       v.buckets must have size (1)
       v.buckets must contain("G." + b.name)
     }
+    it("should maintain a list of active metric") {
+      val ref = TestActorRef(new MetricRepository)
+      ref ! SetValue[LongGauge](gauge, 1)
+      val future = ref ? MetricListQuery
+      val Success(v: MetricListResponse) = future.value.get
+      v.metrics must have size (1)
+      v.metrics must contain(gauge.asInstanceOf[Metric])
+    }
 
     it("should handle a start publish event") {
       val ref = TestActorRef(new MetricRepository)

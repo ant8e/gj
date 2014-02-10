@@ -29,6 +29,7 @@ class MetricRepository extends Actor {
       child ! m
     }
     case BucketListQuery ⇒ sender ! BucketListResponse(metricActors.keys.map(metricActorName))
+    case MetricListQuery ⇒ sender ! MetricListResponse(metricActors.keys)
     case sp@StartPublish(m) ⇒ metricActors.get(m).foreach(_ forward sp)
     case sp@StopPublish(m) ⇒ metricActors.get(m).foreach(_ forward sp)
     case FlushAll ⇒ metricActors.foreach(p ⇒ p._2 ! Flush(p._1, 0))
