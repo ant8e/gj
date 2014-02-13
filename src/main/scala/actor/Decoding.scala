@@ -10,22 +10,6 @@ import scala.util.Failure
 import scala.util.Success
 
 
-/**
- * Listen to UDP messages and fed them to the decoding actors
- */
-class MetricUdpListener(val handler: ActorRef) extends Actor with ActorLogging {
-
-  import RawMetricHandler.MetricRawString
-
-  def receive = {
-    // transform the UDP payload to an UTF-8 String and send it to a decoder
-    case Udp.Received(data, send) ⇒ log.debug("received {} from {}", data.utf8String, send.getAddress.toString); handler ! MetricRawString((data.utf8String))
-  }
-}
-
-object MetricUdpListener {
-  def props(ref: ActorRef): Props = Props(new MetricUdpListener(ref))
-}
 
 /**
  * Actor that handles raw metric message, convert them,
