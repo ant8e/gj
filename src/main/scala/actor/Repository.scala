@@ -73,7 +73,7 @@ object MetricRepository {
 /**
  * This trait maintains a long variable and defines a partial Receive function to act on that value
  */
-trait LongValueAggregator[T <: Metric] {
+trait ValueAggregator[T <: Metric] {
   self: MetricStore[T#Value] with Actor ⇒
 
   import MetricRepository._
@@ -91,11 +91,11 @@ trait LongValueAggregator[T <: Metric] {
   private[this] def reset = _value = resetValue
 
   def incrementIt: Receive = {
-    case Increment(_, v: T#Value) ⇒ _value = plus(_value, v)
+    case Increment(_, v: T#Value,_) ⇒ _value = plus(_value, v)
   }
 
   def setIt: Receive = {
-    case SetValue(_, v: T#Value) ⇒ _value = v
+    case SetValue(_, v: T#Value,_) ⇒ _value = v
   }
 
   def storeAndResetIt: Receive = {
@@ -135,7 +135,7 @@ trait MetricStore[T] {
   }
 }
 
-class CounterAggregatorWorkerActor(val metric: LongCounter) extends Actor with LongValueAggregator[LongCounter] with MetricStore[LongCounter#Value] {
+class CounterAggregatorWorkerActor(val metric: LongCounter) extends Actor with ValueAggregator[LongCounter] with MetricStore[LongCounter#Value] {
   def receive = incrementIt orElse storeAndResetIt orElse publishIt
 
   def resetValue: LongCounter#Value = 0
@@ -143,7 +143,7 @@ class CounterAggregatorWorkerActor(val metric: LongCounter) extends Actor with L
   def plus(v1: LongCounter#Value, v2: LongCounter#Value): LongCounter#Value = v1 + v2
 }
 
-class GaugeAggregatorWorkerActor(val metric: LongGauge) extends Actor with LongValueAggregator[LongGauge] with MetricStore[LongGauge#Value] {
+class GaugeAggregatorWorkerActor(val metric: LongGauge) extends Actor with ValueAggregator[LongGauge] with MetricStore[LongGauge#Value] {
   def receive = incrementIt orElse setIt orElse storeIt orElse publishIt
 
   def resetValue: LongGauge#Value = 0
@@ -151,7 +151,7 @@ class GaugeAggregatorWorkerActor(val metric: LongGauge) extends Actor with LongV
   def plus(v1: LongGauge#Value, v2: LongGauge#Value): LongGauge#Value = v1 + v2
 }
 
-class TimingAggregatorWorkerActor(val metric: LongTiming) extends Actor with LongValueAggregator[LongTiming] with MetricStore[LongTiming#Value] {
+class TimingAggregatorWorkerActor(val metric: LongTiming) extends Actor with ValueAggregator[LongTiming] with MetricStore[LongTiming#Value] {
   def receive = setIt orElse storeAndResetIt orElse publishIt
 
   def resetValue: LongTiming#Value = 0
@@ -165,7 +165,7 @@ class DistinctAggregatorWorkerActor(val metric: LongDistinct) extends Actor with
   def value = set.size
 
   def receive = {
-    case SetValue(_, v) ⇒ set = set + v
+    case SetValue(_, v,_) ⇒ set = set + v
     case Flush(_, t) ⇒ {
       store(t, value);
       set = Set()

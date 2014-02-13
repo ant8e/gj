@@ -24,15 +24,15 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
   describe("Message splitter actor") {
     it("should split a multiple metric  string and emit several SingleMetricRawString") {
       val ref = TestActorRef(new RawMetricSplitter(self))
-      ref ! MetricRawString("aaa\nbbb")
-      expectMsgAllConformingOf(1 second, classOf[SingleMetricRawString], classOf[SingleMetricRawString]) must be(Seq(SingleMetricRawString("aaa"), SingleMetricRawString("bbb")))
+      ref ! MetricRawString("aaa\nbbb",0)
+      expectMsgAllConformingOf(1 second, classOf[SingleMetricRawString], classOf[SingleMetricRawString]) must be(Seq(SingleMetricRawString("aaa",0), SingleMetricRawString("bbb",0)))
 
     }
 
     it("should handle a single metric  string and emit one SingleMetricRawString") {
       val ref = TestActorRef(new RawMetricSplitter(self))
-      ref ! MetricRawString("aaa")
-      expectMsg(SingleMetricRawString("aaa"))
+      ref ! MetricRawString("aaa",0)
+      expectMsg(SingleMetricRawString("aaa",0))
     }
 
   }
@@ -47,34 +47,34 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
     val ref = TestActorRef(new MetricDecoder)
 
     it("should decode counter metrics") {
-      ref ! SingleMetricRawString("test.bucket:1|c")
-      expectMsg(10 millis, Increment[LongCounter](counter, 1))
+      ref ! SingleMetricRawString("test.bucket:1|c",0)
+      expectMsg(10 millis, Increment[LongCounter](counter, 1,0))
     }
 
     it("should decode timing metrics") {
-      ref ! SingleMetricRawString("test.bucket:100|ms")
-      expectMsg(10 millis, SetValue[LongTiming](timing, 100))
+      ref ! SingleMetricRawString("test.bucket:100|ms",0)
+      expectMsg(10 millis, SetValue[LongTiming](timing, 100,0))
 
     }
 
     it("should decode gauge setting metrics") {
-      ref ! SingleMetricRawString("test.bucket:100|g")
-      expectMsg(10 millis, SetValue[LongGauge](gauge, 100))
+      ref ! SingleMetricRawString("test.bucket:100|g",0)
+      expectMsg(10 millis, SetValue[LongGauge](gauge, 100,0))
 
     }
 
     it("should decode Gauge updating metrics (dec)") {
-      ref ! SingleMetricRawString("test.bucket:-100|g")
-      expectMsg(10 millis, new Increment[LongGauge](gauge, -100))
+      ref ! SingleMetricRawString("test.bucket:-100|g",0)
+      expectMsg(10 millis, new Increment[LongGauge](gauge, -100,0))
     }
 
     it("should decode Gauge updating metrics (inc)") {
-      ref ! SingleMetricRawString("test.bucket:+100|g")
-      expectMsg(10 millis, Increment[LongGauge](gauge, 100))
+      ref ! SingleMetricRawString("test.bucket:+100|g",0)
+      expectMsg(10 millis, Increment[LongGauge](gauge, 100,0))
     }
     it("should decode Distinct setting metrics") {
-      ref ! SingleMetricRawString("test.bucket:100|s")
-      expectMsg(10 millis, SetValue[LongDistinct](distinct, 100))
+      ref ! SingleMetricRawString("test.bucket:100|s",0)
+      expectMsg(10 millis, SetValue[LongDistinct](distinct, 100,0))
 
     }
 
@@ -84,18 +84,18 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
   describe("Gauge Style Worker actor ") {
     it("should set the gauge with a SetValue") {
       val ref = TestActorRef(new GaugeAggregatorWorkerActor(gauge))
-      ref ! SetValue[LongGauge](gauge, 42)
+      ref ! SetValue[LongGauge](gauge, 42,0)
       ref.underlyingActor.value must be(42)
     }
     it("should increment the gauge with a Increment") {
       val ref = TestActorRef(new GaugeAggregatorWorkerActor(gauge))
-      ref ! new Increment[LongGauge](gauge, 1)
+      ref ! new Increment[LongGauge](gauge, 1,0)
       ref.underlyingActor.value must be(1)
     }
 
     it("should not reset the value on flush") {
       val ref = TestActorRef(new GaugeAggregatorWorkerActor(gauge))
-      ref ! new Increment[LongGauge](gauge, 1)
+      ref ! new Increment[LongGauge](gauge, 1,0)
       ref.underlyingActor.value must be(1)
       ref ! flushOp
       ref.underlyingActor.value must be(1)
@@ -106,17 +106,17 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
   describe("Counter Style Worker actor ") {
     it("should NOT set the counter with a SetValue") {
       val ref = TestActorRef(new CounterAggregatorWorkerActor(counter))
-      ref ! new SetValue[LongCounter](counter, 42)
+      ref ! new SetValue[LongCounter](counter, 42,0)
       ref.underlyingActor.value must be(0)
     }
     it("should increment the gauge with a Increment") {
       val ref = TestActorRef(new CounterAggregatorWorkerActor(counter))
-      ref ! new Increment[LongCounter](counter, 42)
+      ref ! new Increment[LongCounter](counter, 42,0)
       ref.underlyingActor.value must be(42)
     }
     it("should reset the value on flush") {
       val ref = TestActorRef(new CounterAggregatorWorkerActor(counter))
-      ref ! new Increment[LongCounter](counter, 1)
+      ref ! new Increment[LongCounter](counter, 1,0)
       ref.underlyingActor.value must be(1)
       ref ! flushOp
       ref.underlyingActor.value must be(0)
@@ -128,17 +128,17 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
   describe("Timing Style Worker actor ") {
     it("should set the timing  with a SetValue") {
       val ref = TestActorRef(new TimingAggregatorWorkerActor(timing))
-      ref ! new SetValue[LongTiming](timing, 42)
+      ref ! new SetValue[LongTiming](timing, 42,0)
       ref.underlyingActor.value must be(42)
     }
     it("should NOT increment the timing with a Increment") {
       val ref = TestActorRef(new TimingAggregatorWorkerActor(timing))
-      ref ! new Increment[LongTiming](timing, 42)
+      ref ! new Increment[LongTiming](timing, 42,0)
       ref.underlyingActor.value must be(0)
     }
     it("should reset the value on flush") {
       val ref = TestActorRef(new TimingAggregatorWorkerActor(timing))
-      ref ! new SetValue[LongTiming](timing, 1)
+      ref ! new SetValue[LongTiming](timing, 1,0)
       ref.underlyingActor.value must be(1)
       ref ! flushOp
       ref.underlyingActor.value must be(0)
@@ -149,22 +149,22 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
   describe("Distinct Style Worker actor ") {
     it("should set the distinct  with a SetValue") {
       val ref = TestActorRef(new DistinctAggregatorWorkerActor(distinct))
-      ref ! SetValue[LongDistinct](distinct, 42)
+      ref ! SetValue[LongDistinct](distinct, 42,0)
       ref.underlyingActor.value must be(1)
-      ref ! SetValue[LongDistinct](distinct, 42)
+      ref ! SetValue[LongDistinct](distinct, 42,0)
       ref.underlyingActor.value must be(1)
-      ref ! new SetValue[LongDistinct](distinct, 24)
+      ref ! new SetValue[LongDistinct](distinct, 24,0)
       ref.underlyingActor.value must be(2)
 
     }
     it("should NOT increment the distinct with a Increment") {
       val ref = TestActorRef(new DistinctAggregatorWorkerActor(distinct))
-      ref ! new Increment[LongDistinct](distinct, 42)
+      ref ! new Increment[LongDistinct](distinct, 42,0)
       ref.underlyingActor.value must be(0)
     }
     it("should reset the value on flush") {
       val ref = TestActorRef(new DistinctAggregatorWorkerActor(distinct))
-      ref ! new SetValue[distinct.type](distinct, 1)
+      ref ! new SetValue[distinct.type](distinct, 1,0)
       ref.underlyingActor.value must be(1)
       ref ! flushOp
       ref.underlyingActor.value must be(0)
@@ -183,7 +183,7 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
 
     it("should maintain a list of active buckets") {
       val ref = TestActorRef(new MetricRepository)
-      ref ! SetValue[LongGauge](gauge, 1)
+      ref ! SetValue[LongGauge](gauge, 1,0)
       val future = ref ? BucketListQuery
       val Success(v: BucketListResponse) = future.value.get
       v.buckets must have size (1)
@@ -191,7 +191,7 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
     }
     it("should maintain a list of active metric") {
       val ref = TestActorRef(new MetricRepository)
-      ref ! SetValue[LongGauge](gauge, 1)
+      ref ! SetValue[LongGauge](gauge, 1,0)
       val future = ref ? MetricListQuery
       val Success(v: MetricListResponse) = future.value.get
       v.metrics must have size (1)
@@ -200,7 +200,7 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
 
     it("should handle a start publish event") {
       val ref = TestActorRef(new MetricRepository)
-      ref ! SetValue[LongGauge](gauge, 1)
+      ref ! SetValue[LongGauge](gauge, 1,0)
       ref ! StartPublish(gauge)
       ref ! FlushAll
       expectMsgPF(100.millisecond) { case MetricValueAt(`gauge`, _, 1) ⇒ () }
@@ -209,7 +209,7 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
 
     it("should handle a stop publish event") {
       val ref = TestActorRef(new MetricRepository)
-      ref ! SetValue[LongGauge](gauge, 1)
+      ref ! SetValue[LongGauge](gauge, 1,0)
       ref ! StartPublish(gauge)
       ref ! FlushAll
       expectMsgPF(100.millisecond) { case MetricValueAt(`gauge`, _, 1) ⇒ () }
@@ -225,7 +225,7 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
 
       val agreg = TestActorRef(new MetricRepository)
       val ref = TestActorRef(ValuesProvider.props(agreg))
-      agreg ! SetValue[LongGauge](gauge, 1)
+      agreg ! SetValue[LongGauge](gauge, 1,0)
       ref ! Subscribe(gauge)
       agreg ! FlushAll
       expectMsgPF(100.millisecond) { case MetricValueAt(`gauge`, _, 1) ⇒ () }
@@ -234,7 +234,7 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
 
       val agreg = TestActorRef(new MetricRepository)
       val ref = TestActorRef(ValuesProvider.props(agreg))
-      agreg ! SetValue[LongGauge](gauge, 1)
+      agreg ! SetValue[LongGauge](gauge, 1,0)
       ref ! Subscribe(gauge)
       agreg ! FlushAll
       expectMsgPF(100.millisecond) { case MetricValueAt(`gauge`, _, 1) ⇒ () }

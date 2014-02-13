@@ -56,9 +56,9 @@ class RawMetricHandler(repo: ActorRef) extends Actor with ActorLogging {
 
 object RawMetricHandler {
 
-  case class MetricRawString(s: String)
+  case class MetricRawString(s: String,  ts :Long = System.currentTimeMillis())
 
-  case class SingleMetricRawString(s: String)
+  case class SingleMetricRawString(s: String, ts:Long)
 
   object Tick
 
@@ -77,8 +77,8 @@ class RawMetricSplitter(decoder: ActorRef) extends Actor {
   import RawMetricHandler._
 
   def receive = {
-    case MetricRawString(s) ⇒ s.lines.foreach {
-      decoder ! SingleMetricRawString(_)
+    case MetricRawString(s,ts) ⇒ s.lines.foreach {
+      decoder ! SingleMetricRawString(_,ts)
     }
   }
 }
@@ -95,7 +95,7 @@ class MetricDecoder extends Actor with ActorLogging {
   import RawMetricHandler.SingleMetricRawString
 
   def receive = {
-    case SingleMetricRawString(m) ⇒ parse(m) match {
+    case SingleMetricRawString(m,ts) ⇒ parse(m,ts) match {
       case Success(op) ⇒ sender ! op
       case Failure(e) ⇒ log.debug("unable to parse message {} because {}", m, e)
     }
@@ -111,7 +111,7 @@ class MetricDecoder extends Actor with ActorLogging {
    * @param rawString the metric string
    * @return  Success if everything went right Failure instead
    */
-  private def parse(rawString: String): Try[MetricOperation[_]] = Try {
+  private def parse(rawString: String, ts :Long): Try[MetricOperation[_]] = Try {
     //TODO support counter sampling param
     val ParsingRegExp(bucket, value, style, _) = rawString.trim
     val b = SimpleBucket(bucket)
@@ -120,13 +120,13 @@ class MetricDecoder extends Actor with ActorLogging {
     else value.toLong
 
     style match {
-      case "c" ⇒ Increment[LongCounter](LongCounter(b), v)
-      case "ms" ⇒ SetValue[LongTiming](LongTiming(b), v)
+      case "c" ⇒ Increment[LongCounter](LongCounter(b), v,ts)
+      case "ms" ⇒ SetValue[LongTiming](LongTiming(b), v,ts)
       case "g" ⇒ value match {
-        case SignedDigit() ⇒ Increment[LongGauge](LongGauge(b), v)
-        case _ ⇒ new SetValue[LongGauge](LongGauge(b), v)
+        case SignedDigit() ⇒ Increment[LongGauge](LongGauge(b), v,ts)
+        case _ ⇒ new SetValue[LongGauge](LongGauge(b), v,ts)
       }
-      case "s" ⇒ new SetValue[LongDistinct](LongDistinct(b), v) with Distinct
+      case "s" ⇒ new SetValue[LongDistinct](LongDistinct(b), v,ts) with Distinct
 
     }
   }
