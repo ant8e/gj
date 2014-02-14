@@ -74,7 +74,6 @@ trait MetricServer {
 
 }
 
-
 /**
  * Listen to UDP messages and fed them to the decoding actors
  */

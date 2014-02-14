@@ -91,11 +91,11 @@ trait ValueAggregator[T <: Metric] {
   private[this] def reset = _value = resetValue
 
   def incrementIt: Receive = {
-    case Increment(_, v: T#Value,_) ⇒ _value = plus(_value, v)
+    case Increment(_, v: T#Value, _) ⇒ _value = plus(_value, v)
   }
 
   def setIt: Receive = {
-    case SetValue(_, v: T#Value,_) ⇒ _value = v
+    case SetValue(_, v: T#Value, _) ⇒ _value = v
   }
 
   def storeAndResetIt: Receive = {
@@ -165,7 +165,7 @@ class DistinctAggregatorWorkerActor(val metric: LongDistinct) extends Actor with
   def value = set.size
 
   def receive = {
-    case SetValue(_, v,_) ⇒ set = set + v
+    case SetValue(_, v, _) ⇒ set = set + v
     case Flush(_, t) ⇒ {
       store(t, value);
       set = Set()

@@ -95,9 +95,9 @@ sealed case class MetricValueAt[M <: Metric](metric: M, timestamp: Long, value: 
 /**
  * Operations on Metrics
  */
-sealed abstract class MetricOperation[+T <: Metric]{
+sealed abstract class MetricOperation[+T <: Metric] {
   val metric: T
-  val ts:Long
+  val ts: Long
 }
 
 /**
@@ -105,7 +105,7 @@ sealed abstract class MetricOperation[+T <: Metric]{
  * @param metric
  * @param increment
  */
-case class Increment[T <: Metric](metric: T, increment: T#Value, ts:Long) extends MetricOperation[T] {
+case class Increment[T <: Metric](metric: T, increment: T#Value, ts: Long) extends MetricOperation[T] {
   //  def   apply[T <: Metric : ClassTag] (b:Bucket, increment:T#Value) = new Increment[T](implicitly[ClassTag[T]].runtimeClass.getConstructor(classOf[Bucket]).newInstance(b), increment )
 }
 
@@ -114,7 +114,7 @@ case class Increment[T <: Metric](metric: T, increment: T#Value, ts:Long) extend
  * @param metric
  * @param value
  */
-case class SetValue[+T <: Metric](metric: T, value: T#Value, ts:Long) extends MetricOperation[T]
+case class SetValue[+T <: Metric](metric: T, value: T#Value, ts: Long) extends MetricOperation[T]
 
 /**
  * Flush the current Metric value :
