@@ -20,7 +20,7 @@ object Dependencies {
   val akkaTestKit = "com.typesafe.akka" %% "akka-testkit" % akkaVersion
   val scalaTest = "org.scalatest" %% "scalatest" % "1.9.1"
 
-//  val byteCask = "com.github.bytecask" %% "bytecask" % "1.0-SNAPSHOT"
+  val byteCask = "com.github.bytecask" %% "bytecask" % "1.0-SNAPSHOT"
 
-  val deps =   spray  ++ Seq(akkaActor, akkaTestKit % "test", scalaTest % "test")
+  val deps = spray ++ Seq(akkaActor,byteCask, akkaTestKit % "test", scalaTest % "test")
 }

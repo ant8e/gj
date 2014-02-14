@@ -1,8 +1,9 @@
 package gj.actor
 
-import akka.actor.{ ActorLogging, ActorRef, Actor, Props }
+import akka.actor.{ActorLogging, ActorRef, Actor, Props}
 import gj.metric._
 import scala.Some
+import storage.{MemoryMetricStore, MetricStore}
 
 /**
  * Handle the metric operation, store and aggregate all the metrics
@@ -30,8 +31,8 @@ class MetricRepository extends Actor with ActorLogging {
     }
     case BucketListQuery ⇒ sender ! BucketListResponse(metricActors.keys.map(metricActorName))
     case MetricListQuery ⇒ sender ! MetricListResponse(metricActors.keys)
-    case sp @ StartPublish(m) ⇒ metricActors.get(m).foreach(_ forward sp)
-    case sp @ StopPublish(m) ⇒ metricActors.get(m).foreach(_ forward sp)
+    case sp@StartPublish(m) ⇒ metricActors.get(m).foreach(_ forward sp)
+    case sp@StopPublish(m) ⇒ metricActors.get(m).foreach(_ forward sp)
     case FlushAll ⇒ metricActors.foreach(p ⇒ p._2 ! Flush(p._1, 0))
 
   }
@@ -74,7 +75,7 @@ object MetricRepository {
  * This trait maintains a long variable and defines a partial Receive function to act on that value
  */
 trait ValueAggregator[T <: Metric] {
-  self: MetricStore[T#Value] with Actor ⇒
+  self: MemoryMetricStore[T] with Actor ⇒
 
   import MetricRepository._
 
@@ -123,19 +124,11 @@ trait ValueAggregator[T <: Metric] {
   def publish = pub.foreach(_ ! MetricValueAt[T](metric, 0, _value))
 }
 
-/**
- * Stores a metric along with it's timestamp
- * @tparam T the type of the metric
- */
-trait MetricStore[T] {
-  private[this] var _store = Vector[(Long, T)]()
 
-  def store(time: Long, value: T) = {
-    _store = (time, value) +: _store
-  }
-}
 
-class CounterAggregatorWorkerActor(val metric: LongCounter) extends Actor with ValueAggregator[LongCounter] with MetricStore[LongCounter#Value] {
+
+
+class CounterAggregatorWorkerActor(val metric: LongCounter) extends Actor with ValueAggregator[LongCounter] with MemoryMetricStore[LongCounter] {
   def receive = incrementIt orElse storeAndResetIt orElse publishIt
 
   def resetValue: LongCounter#Value = 0
@@ -143,7 +136,7 @@ class CounterAggregatorWorkerActor(val metric: LongCounter) extends Actor with V
   def plus(v1: LongCounter#Value, v2: LongCounter#Value): LongCounter#Value = v1 + v2
 }
 
-class GaugeAggregatorWorkerActor(val metric: LongGauge) extends Actor with ValueAggregator[LongGauge] with MetricStore[LongGauge#Value] {
+class GaugeAggregatorWorkerActor(val metric: LongGauge) extends Actor with ValueAggregator[LongGauge] with MemoryMetricStore[LongGauge] {
   def receive = incrementIt orElse setIt orElse storeIt orElse publishIt
 
   def resetValue: LongGauge#Value = 0
@@ -151,7 +144,7 @@ class GaugeAggregatorWorkerActor(val metric: LongGauge) extends Actor with Value
   def plus(v1: LongGauge#Value, v2: LongGauge#Value): LongGauge#Value = v1 + v2
 }
 
-class TimingAggregatorWorkerActor(val metric: LongTiming) extends Actor with ValueAggregator[LongTiming] with MetricStore[LongTiming#Value] {
+class TimingAggregatorWorkerActor(val metric: LongTiming) extends Actor with ValueAggregator[LongTiming] with MemoryMetricStore[LongTiming] {
   def receive = setIt orElse storeAndResetIt orElse publishIt
 
   def resetValue: LongTiming#Value = 0
@@ -159,7 +152,7 @@ class TimingAggregatorWorkerActor(val metric: LongTiming) extends Actor with Val
   def plus(v1: LongTiming#Value, v2: LongTiming#Value): LongTiming#Value = v1 + v2
 }
 
-class DistinctAggregatorWorkerActor(val metric: LongDistinct) extends Actor with MetricStore[LongDistinct#Value] {
+class DistinctAggregatorWorkerActor(val metric: LongDistinct) extends Actor with MemoryMetricStore[LongDistinct] {
   private[this] var set = Set[Any]()
 
   def value = set.size
