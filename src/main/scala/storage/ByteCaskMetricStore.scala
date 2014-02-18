@@ -8,7 +8,7 @@ import com.github.bytecask.Bytecask
  * In memory metric store
  */
 trait ByteCaskMetricStore[T <: Metric] extends MetricStore[T] {
-  private[this] val bcstore = new Bytecask(metric.bucket.name + ".mst")
+  protected[this] lazy val bcstore = new Bytecask(metric.bucket.name + ".mst")
 
   import com.github.bytecask.Bytes._
 

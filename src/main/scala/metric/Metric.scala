@@ -72,7 +72,7 @@ trait Metric extends MetricStyle with MetricType {
   /**
    * the bucket
    */
-  val bucket: Bucket
+  def bucket: Bucket
 }
 
 trait LongMetricType extends MetricType {
@@ -80,7 +80,7 @@ trait LongMetricType extends MetricType {
 
   def toBa(v: LongMetricType#Value): Array[Byte] = v.toString.getBytes()
 
-  def fromBa(ba: Array[Byte]): LongMetricType#Value = ba.toString.toLong
+  def fromBa(ba: Array[Byte]): LongMetricType#Value = new String(ba).toString.toLong
 }
 
 sealed case class LongGauge(bucket: Bucket) extends Metric with Gauge with LongMetricType

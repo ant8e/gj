@@ -1,6 +1,6 @@
 import gj.metric.{SimpleBucket, LongCounter, Metric}
 import org.scalatest.FunSpec
-import storage.{MemoryMetricStore, MetricStore}
+import storage.{ByteCaskMetricStore, MemoryMetricStore, MetricStore}
 
 /**
  *
@@ -28,9 +28,19 @@ trait StorageSpec {
 
 class MemoryStoreSpec extends FunSpec with StorageSpec {
 
-  describe("A MemoryStoreSpec") {
+  describe("A MemoryStore") {
     val store = new MemoryMetricStore[LongCounter] {
+      override lazy val metric : LongCounter = new LongCounter(SimpleBucket("test.bucket"))
+    }
+    it should behave like storage[LongCounter](store, 42L)
+  }
+}
+class ByteCaskStoreSpec extends FunSpec with StorageSpec {
+
+  describe("A ByteCaskStore ") {
+    val store = new ByteCaskMetricStore[LongCounter] {
       override val metric: LongCounter = new LongCounter(SimpleBucket("test.bucket"))
+      bcstore.keys().foreach(bcstore.delete (_))
     }
     it should behave like storage[LongCounter](store, 42L)
   }
