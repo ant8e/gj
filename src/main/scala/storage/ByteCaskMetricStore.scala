@@ -8,7 +8,7 @@ import com.github.bytecask.Bytecask
  * In memory metric store
  */
 trait ByteCaskMetricStore[T <: Metric] extends MetricStore[T] {
-  private[this] var bcstore = new Bytecask(metric.bucket.name + ".mst")
+  private[this] val bcstore = new Bytecask(metric.bucket.name + ".mst")
 
   import com.github.bytecask.Bytes._
 
@@ -18,6 +18,7 @@ trait ByteCaskMetricStore[T <: Metric] extends MetricStore[T] {
   }
 
 
+
   override def fetch(from: Option[Long], to: Option[Long]): Seq[(Long, T#Value)] = {
     val keys = bcstore.keys().map(_.asString.toLong)
       .filter(e => isInRange(from, to)(e))
@@ -25,11 +26,13 @@ trait ByteCaskMetricStore[T <: Metric] extends MetricStore[T] {
       .sorted(Ordering.Long.reverse)
 
     (for (k <- keys;
-           v <- bcstore.get(k.toString))
-      yield (k ->tos(v.asString))
+          v <- bcstore.get(k.toString))
+    yield (k -> metric.fromBa(v))
       ).toSeq
   }
 
-   def tos(v: String): T#Value = ???
+
+
+
 
 }

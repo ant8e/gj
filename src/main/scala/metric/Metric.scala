@@ -62,6 +62,10 @@ trait Distinct extends MetricStyle {
 
 trait MetricType {
   type Value
+
+  def toBa(v: Value): Array[Byte]
+
+  def fromBa(ba: Array[Byte]): Value
 }
 
 trait Metric extends MetricStyle with MetricType {
@@ -73,6 +77,10 @@ trait Metric extends MetricStyle with MetricType {
 
 trait LongMetricType extends MetricType {
   type Value = Long
+
+  def toBa(v: LongMetricType#Value): Array[Byte] = v.toString.getBytes()
+
+  def fromBa(ba: Array[Byte]): LongMetricType#Value = ba.toString.toLong
 }
 
 sealed case class LongGauge(bucket: Bucket) extends Metric with Gauge with LongMetricType
