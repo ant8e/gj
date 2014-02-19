@@ -13,8 +13,7 @@ trait ByteCaskMetricStore[T <: Metric] extends MetricStore[T] {
   import com.github.bytecask.Bytes._
 
   def store(time: Long, value: T#Value) = {
-    // FIXME non optimal storage as string. We need to define a proper serialisation scheme
-    bcstore.put(time.toString, value.toString)
+    bcstore.put(time.toString, metric.ValueByteEncoder(value.asInstanceOf[metric.Value]))
   }
 
 
@@ -27,7 +26,7 @@ trait ByteCaskMetricStore[T <: Metric] extends MetricStore[T] {
 
     (for (k <- keys;
           v <- bcstore.get(k.toString))
-    yield (k -> metric.fromBa(v))
+    yield (k -> metric.ValueByteDecoder(v))
       ).toSeq
   }
 

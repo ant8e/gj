@@ -1,5 +1,7 @@
 package gj.metric
 
+import java.nio.ByteBuffer
+
 /**
  * A Metric bucket
  */
@@ -63,9 +65,10 @@ trait Distinct extends MetricStyle {
 trait MetricType {
   type Value
 
-  def toBa(v: Value): Array[Byte]
+   def ValueByteEncoder (x:Value ):Array[Byte]
 
-  def fromBa(ba: Array[Byte]): Value
+   def ValueByteDecoder (x:Array[Byte]): Value
+
 }
 
 trait Metric extends MetricStyle with MetricType {
@@ -78,9 +81,11 @@ trait Metric extends MetricStyle with MetricType {
 trait LongMetricType extends MetricType {
   type Value = Long
 
-  def toBa(v: LongMetricType#Value): Array[Byte] = v.toString.getBytes()
+  def ValueByteEncoder(x: LongMetricType#Value): Array[Byte] = ByteBuffer.allocate(8).putLong(x).array()
 
-  def fromBa(ba: Array[Byte]): LongMetricType#Value = new String(ba).toString.toLong
+  def ValueByteDecoder(x: Array[Byte]): LongMetricType#Value = ByteBuffer.wrap(x).getLong
+
+
 }
 
 sealed case class LongGauge(bucket: Bucket) extends Metric with Gauge with LongMetricType
