@@ -1,34 +1,40 @@
 package ui
 
 import gj.ActorSystemProvider
-import spray.routing.SimpleRoutingApp
+import spray.routing.{HttpService, SimpleRoutingApp}
 
 /**
  *
  */
-trait UiServer extends SimpleRoutingApp {
-  self: ActorSystemProvider with UiServerConfiguration =>
 
+trait UIServerRoute extends HttpService {
   lazy val staticRoutes = get {
     compressResponse() {
-      path("") {
+      pathSingleSlash {
         getFromResource("web/index.html")
       } ~
         getFromResourceDirectory("web")
     }
   }
-  lazy val apiRoutes = path("api") {
+  lazy val apiRoutes = pathPrefix("api") {
     get {
       _.complete("Todo")
     }
   }
 
+  lazy val routes = apiRoutes ~ staticRoutes
+
+}
+
+trait UiServer extends SimpleRoutingApp with UIServerRoute {
+  self: ActorSystemProvider with UiServerConfiguration =>
+
 
   implicit val sprayActorSystem = this.actorSystem
-  startServer("", UiServerPort)(apiRoutes ~ staticRoutes)
+  startServer("", UiServerPort)(routes)
 
 }
 
 trait UiServerConfiguration {
-  def UiServerPort :Int
+  def UiServerPort: Int
 }
