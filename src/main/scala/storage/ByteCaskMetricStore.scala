@@ -5,7 +5,7 @@ import com.github.bytecask.Bytecask
 
 
 /**
- * In memory metric store
+ * ByteCask Store
  */
 trait ByteCaskMetricStore[T <: Metric] extends MetricStore[T] {
   protected[this] lazy val bcstore = new Bytecask(metric.bucket.name + ".mst")
@@ -13,7 +13,7 @@ trait ByteCaskMetricStore[T <: Metric] extends MetricStore[T] {
   import com.github.bytecask.Bytes._
 
   def store(time: Long, value: T#Value) = {
-    bcstore.put(time.toString, metric.ValueByteEncoder(value.asInstanceOf[metric.Value]))
+    bcstore.put(time.toString, metric.valueByteEncoder(value.asInstanceOf[metric.Value]))
   }
 
 
@@ -26,7 +26,7 @@ trait ByteCaskMetricStore[T <: Metric] extends MetricStore[T] {
 
     (for (k <- keys;
           v <- bcstore.get(k.toString))
-    yield (k -> metric.ValueByteDecoder(v))
+    yield (k -> metric.valueByteDecoder(v))
       ).toSeq
   }
 

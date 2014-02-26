@@ -20,7 +20,7 @@ case class NodeBucket(leafName: String, parent: Option[HierarchicalBucket], chil
 /**
  * Metric style indicate the meaning of a metric
  */
-sealed abstract trait MetricStyle {
+sealed trait MetricStyle {
 
   /**
    * a tag for the Metric style (unique)
@@ -65,9 +65,9 @@ trait Distinct extends MetricStyle {
 trait MetricType {
   type Value
 
-   def ValueByteEncoder (x:Value ):Array[Byte]
+   def valueByteEncoder (x:Value ):Array[Byte]
 
-   def ValueByteDecoder (x:Array[Byte]): Value
+   def valueByteDecoder (x:Array[Byte]): Value
 
 }
 
@@ -81,9 +81,9 @@ trait Metric extends MetricStyle with MetricType {
 trait LongMetricType extends MetricType {
   type Value = Long
 
-  def ValueByteEncoder(x: LongMetricType#Value): Array[Byte] = ByteBuffer.allocate(8).putLong(x).array()
+  def valueByteEncoder(x: LongMetricType#Value): Array[Byte] = ByteBuffer.allocate(8).putLong(x).array()
 
-  def ValueByteDecoder(x: Array[Byte]): LongMetricType#Value = ByteBuffer.wrap(x).getLong
+  def valueByteDecoder(x: Array[Byte]): LongMetricType#Value = ByteBuffer.wrap(x).getLong
 
 
 }
