@@ -8,7 +8,7 @@ object Dependencies {
   val resolvers = Seq(
     "Typesafe repo" at "http://repo.typesafe.com/typesafe/releases/",
     "spray repo" at "http://repo.spray.io/",
-    "spray on the edge" at "http://nightlies.spray.io",
+//    "spray on the edge" at "http://nightlies.spray.io",
     "sonatype-snapshots" at "https://oss.sonatype.org/content/groups/public")
 
   val spray = Seq("io.spray" % "spray-can" % sprayVersion,

@@ -1,15 +1,16 @@
 package gj
 
-import gj.actor.MetricRepository.{ MetricListResponse, MetricListQuery }
+import gj.actor.MetricRepository.{MetricListResponse, MetricListQuery}
 import gj.metric.Metric
-import java.net.{ InetAddress, InetSocketAddress }
+import java.net.{InetAddress, InetSocketAddress}
 import scala.concurrent.duration._
 import akka.pattern.ask
-import akka.io.{ Udp, IO }
+import akka.io.{Udp, IO}
 import akka.util.Timeout
 import akka.actor._
 import gj.actor._
 import scala.concurrent.Future
+import ui.{UiServerConfiguration, UiServer}
 
 trait MetricServerConfiguration {
   /**
@@ -91,11 +92,10 @@ object MetricUdpListener {
   def props(ref: ActorRef): Props = Props(new MetricUdpListener(ref))
 }
 
-object Main extends App with MetricServer with MetricServerConfiguration with ActorSystemProvider {
-  override def actorSystem: ActorSystem = ActorSystem("Metric-Server")
-
-  override def port: Int = 12344
-
-  override def localAddress = Some("localhost")
-}
+object Main extends {
+  val actorSystem: ActorSystem = ActorSystem("Metric-Server")
+  val port: Int = 12344
+  val localAddress = Some("localhost")
+  val UiServerPort =8080
+} with App with MetricServer with MetricServerConfiguration with ActorSystemProvider with UiServer with UiServerConfiguration
 
