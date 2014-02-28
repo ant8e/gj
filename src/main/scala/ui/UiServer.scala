@@ -17,14 +17,16 @@
 package ui
 
 import gj.ActorSystemProvider
-import spray.routing.{HttpService, SimpleRoutingApp}
+import spray.routing.{PathMatchers, HttpService, SimpleRoutingApp}
+import akka.actor.{Actor, ActorRefFactory, Props}
 
 /**
  *
  */
 
 trait UIServerRoute extends HttpService {
-  lazy val staticRoutes = get {    decompressRequest()
+  lazy val staticRoutes = get {
+    decompressRequest()
     compressResponse() {
       pathSingleSlash {
         getFromResource("web/index.html")
@@ -38,7 +40,28 @@ trait UIServerRoute extends HttpService {
     }
   }
 
-  lazy val routes = apiRoutes ~ staticRoutes
+  lazy val valueRoute = path("bucket" / PathMatchers.Rest) {
+    b:String =>
+      import ServerSideEventsDirectives._
+      sse((channel, _) =>
+        implicitly[ActorRefFactory].actorOf(Props(new Actor {
+
+          import scala.concurrent.duration._
+          import context._
+          system.scheduler.schedule(1.second, 1.second, self, "tick")
+
+
+          channel ! RegisterClosedHandler(() => context.stop(self))
+
+         override def receive: Actor.Receive = {
+            case "tick" => channel ! Message(s"hello from $b")
+          }
+
+        }))
+      )
+  }
+
+  lazy val routes = apiRoutes ~valueRoute~ staticRoutes
 
 }
 
