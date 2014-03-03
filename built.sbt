@@ -1,5 +1,6 @@
 
 import scalariform.formatter.preferences._
+import AssemblyKeys._
 
 name := "GraphJunkie"
 
@@ -20,3 +21,9 @@ ScalariformKeys.preferences := FormattingPreferences()
   .setPreference(AlignParameters, true)
   .setPreference(RewriteArrowSymbols, true)
   .setPreference(PreserveDanglingCloseParenthesis, false)
+
+assemblySettings
+
+mainClass in assembly := Some("gj.Main")
+
+jarName in assembly := "gj.jar"
