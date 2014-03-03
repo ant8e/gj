@@ -16,17 +16,19 @@
 
 package gj
 
-import gj.actor.MetricRepository.{MetricListResponse, MetricListQuery}
+import gj.actor.MetricRepository.{ MetricListResponse, MetricListQuery }
+import gj.actor.ValuesProvider.{ UnSubscribe, Subscribe }
 import gj.metric.Metric
-import java.net.{InetAddress, InetSocketAddress}
+import java.net.{ InetAddress, InetSocketAddress }
 import scala.concurrent.duration._
 import akka.pattern.ask
-import akka.io.{Udp, IO}
+import akka.io.{ Udp, IO }
 import akka.util.Timeout
 import akka.actor._
 import gj.actor._
 import scala.concurrent.Future
-import ui.{UiServerConfiguration, UiServer}
+import ui.{ UiServerConfiguration, UiServer }
+import scala.language.postfixOps
 
 trait MetricServerConfiguration {
   /**
@@ -46,7 +48,38 @@ trait ActorSystemProvider {
   def actorSystem: ActorSystem
 }
 
-trait MetricServer {
+trait MetricProvider {
+  self: ActorSystemProvider ⇒
+
+  private implicit val ex = actorSystem.dispatcher
+
+  /**
+   * List all known metrics
+   * @return a Future that will complete with the known metrics
+   */
+  def listMetrics: Future[Iterable[Metric]]
+
+  /**
+   * Test if a metric is known by the system
+   * @param name name of the metric
+   * @return a future that will complete with true if a metric with the supplied name is known by the system
+   */
+  def hasMetric(name: String): Future[Boolean] = findMetric(name) map (_.isDefined)
+
+  /**
+   * Find a metric
+   * @param name name of the metric
+   * @return a future that will complete with Some(metric) if a metric with the supplied name is known by the system, None otherwise
+   */
+  def findMetric(name: String): Future[Option[Metric]] = listMetrics map (_ find (m ⇒ m.bucket.name == name))
+
+  def subscribe(metric: Metric, receiver: ActorRef)
+
+  def unSubscribe(metric: Metric, receiver: ActorRef)
+
+}
+
+trait MetricServer extends MetricProvider {
   self: MetricServerConfiguration with ActorSystemProvider ⇒
 
   // we need an ActorSystem to host our application in
@@ -87,7 +120,11 @@ trait MetricServer {
     }
   }
 
-  def listMetrics: Future[Iterable[Metric]] = (repo ? MetricListQuery).map(_.asInstanceOf[MetricListResponse].metrics)
+  def listMetrics: Future[Iterable[Metric]] = (repo ? MetricListQuery) map (_.asInstanceOf[MetricListResponse].metrics)
+
+  def subscribe(metric: Metric, receiver: ActorRef) = valueProvider.tell(Subscribe(metric), receiver)
+
+  def unSubscribe(metric: Metric, receiver: ActorRef) = valueProvider.tell(UnSubscribe(metric), receiver)
 
 }
 
@@ -100,7 +137,10 @@ class MetricUdpListener(val handler: ActorRef) extends Actor with ActorLogging {
 
   def receive = {
     // transform the UDP payload to an UTF-8 String and send it to the handler
-    case Udp.Received(data, send) ⇒ log.debug("received {} from {}", data.utf8String, send.getAddress.toString); handler ! MetricRawString(data.utf8String)
+    case Udp.Received(data, send) ⇒ {
+      log.debug("received {} from {}", data.utf8String, send.getAddress.toString)
+      handler ! MetricRawString(data.utf8String)
+    }
   }
 }
 
@@ -112,6 +152,6 @@ object Main extends {
   val actorSystem: ActorSystem = ActorSystem("Metric-Server")
   val port: Int = 12344
   val localAddress = Some("localhost")
-  val UiServerPort =8080
+  val UiServerPort = 8080
 } with App with MetricServer with MetricServerConfiguration with ActorSystemProvider with UiServer with UiServerConfiguration
 

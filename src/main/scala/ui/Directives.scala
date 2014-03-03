@@ -1,6 +1,5 @@
 package ui
 
-
 import spray.routing._
 import Directives._
 
@@ -8,7 +7,7 @@ import spray.http._
 import HttpHeaders._
 import akka.actor._
 import scala.concurrent.duration._
-import util.{Success, Failure}
+import util.{ Success, Failure }
 import spray.can.Http
 
 // Enable scala features
@@ -20,7 +19,7 @@ trait ServerSideEventsDirectives {
 
   case class Message(data: String, event: Option[String], id: Option[String])
 
-  case class RegisterClosedHandler(handler: () => Unit)
+  case class RegisterClosedHandler(handler: () ⇒ Unit)
 
   object CloseConnection
 
@@ -32,29 +31,28 @@ trait ServerSideEventsDirectives {
     def apply(data: String, event: String, id: String): Message = Message(data, Some(event), Some(id))
   }
 
-  def sse(body: (ActorRef, Option[String]) => Unit)(implicit refFactory: ActorRefFactory): Route = {
+  def sse(body: (ActorRef, Option[String]) ⇒ Unit)(implicit refFactory: ActorRefFactory): Route = {
 
     val responseStart = HttpResponse(
       headers = `Cache-Control`(CacheDirectives.`no-cache`) :: Nil,
       entity = ":" + (" " * 2049) + "\n" // 2k padding for IE using Yaffle
-    )
+      )
 
     // TODO These headers should be standard headers
     val preflightHeaders = List(
       RawHeader("Access-Control-Allow-Methods", "GET"),
       RawHeader("Access-Control-Allow-Headers", "Last-Event-ID, Cache-Control"),
-      RawHeader("Access-Control-Max-Age", "86400")
-    )
+      RawHeader("Access-Control-Max-Age", "86400"))
 
     def lastEventId = optionalHeaderValueByName("Last-Event-ID") | parameter("lastEventId" ?)
 
-    def sseRoute(lei: Option[String]) = (ctx: RequestContext) => {
+    def sseRoute(lei: Option[String]) = (ctx: RequestContext) ⇒ {
 
       val connectionHandler = refFactory.actorOf(
         Props {
           new Actor {
 
-            var closedHandlers: List[() => Unit] = Nil
+            var closedHandlers: List[() ⇒ Unit] = Nil
 
             ctx.responder ! ChunkedResponseStart(responseStart)
 
@@ -62,23 +60,22 @@ trait ServerSideEventsDirectives {
             context.setReceiveTimeout(15 seconds)
 
             def receive = {
-              case Message(data, event, id) =>
-                val idString = id.map(id => s"id: $id\n").getOrElse("")
-                val eventString = event.map(ev => s"event: $ev\n").getOrElse("")
-                val dataString = data.split("\n").map(d => s"data: $d\n").mkString
+              case Message(data, event, id) ⇒
+                val idString = id.map(id ⇒ s"id: $id\n").getOrElse("")
+                val eventString = event.map(ev ⇒ s"event: $ev\n").getOrElse("")
+                val dataString = data.split("\n").map(d ⇒ s"data: $d\n").mkString
                 ctx.responder ! MessageChunk(s"${idString}${eventString}${dataString}\n")
-              case CloseConnection =>
+              case CloseConnection ⇒
                 ctx.responder ! ChunkedMessageEnd
-              case ReceiveTimeout =>
+              case ReceiveTimeout ⇒
                 ctx.responder ! MessageChunk(":\n") // Comment to keep connection alive
-              case RegisterClosedHandler(handler) => closedHandlers ::= handler
-              case ev: Http.ConnectionClosed =>
+              case RegisterClosedHandler(handler) ⇒ closedHandlers ::= handler
+              case ev: Http.ConnectionClosed ⇒
                 closedHandlers.foreach(_())
                 context.stop(self)
             }
           }
-        }
-      )
+        })
 
       body(connectionHandler, lei)
     }
@@ -87,7 +84,7 @@ trait ServerSideEventsDirectives {
       respondWithMediaType(MediaType.custom("text", "event-stream")) {
         // TODO This should be a standard media type
         lastEventId {
-          lei =>
+          lei ⇒
             sseRoute(lei)
         }
       }
@@ -102,6 +99,5 @@ trait ServerSideEventsDirectives {
 
   }
 }
-
 
 object ServerSideEventsDirectives extends ServerSideEventsDirectives

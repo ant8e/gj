@@ -22,7 +22,7 @@ import gj.metric.Metric
  * Stores a metric along with it's timestamp
  * @tparam T the type of the metric
  */
-trait MetricStore[T <:Metric] {
+trait MetricStore[T <: Metric] {
   val metric: T
 
   /**
@@ -32,7 +32,7 @@ trait MetricStore[T <:Metric] {
    */
   def store(time: Long, value: T#Value): Unit
 
-  def fetch(from: Option[Long], to: Option[Long] = None): Seq[(Long,T#Value)]
+  def fetch(from: Option[Long], to: Option[Long] = None): Seq[(Long, T#Value)]
 
   protected def isInRange(from: Option[Long], to: Option[Long])(t: Long) = isAfter(t, from) && isBefore(t, to)
 

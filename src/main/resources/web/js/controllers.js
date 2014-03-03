@@ -43,15 +43,15 @@ angular.module('myApp.controllers', []).
                 console.log(msg)
                 var items = JSON.parse(msg.data);
                 $scope.values.push(items);
-                //$scope.chartConfig.series[0].data.push(JSON.parse(msg.data).value)
-                $scope.chart1.series[0].addPoint([items.ts, items.value], true, true);
+                $scope.chartConfig.series[0].data.push(JSON.parse(msg.data).value)
+              //  $scope.chart1.series[0].addPoint([items.ts, items.value], true, true);
 
             });
         };
 
         /** start listening on messages from selected room */
         $scope.listen = function () {
-            $scope.chatFeed = new EventSource("/bucket/test.bucket  sadasd");
+            $scope.chatFeed = new EventSource("/bucket/test.bucket");
             $scope.chatFeed.addEventListener("message", $scope.addMsg, false);
         };
 

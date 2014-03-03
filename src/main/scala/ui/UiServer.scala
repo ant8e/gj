@@ -16,17 +16,21 @@
 
 package ui
 
-import gj.ActorSystemProvider
-import spray.routing.{PathMatchers, HttpService, SimpleRoutingApp}
-import akka.actor.{ActorRef, Actor, ActorRefFactory, Props}
+import gj.metric.{ MetricValueAt, Metric }
+import gj.{ MetricProvider, ActorSystemProvider }
+import spray.routing.{ Route, PathMatchers, HttpService, SimpleRoutingApp }
+import akka.actor.{ ActorRef, Actor, ActorRefFactory, Props }
 import ServerSideEventsDirectives._
+import spray.http.StatusCodes
 
 /**
  *
  */
 
 trait UIServerRoute extends HttpService {
-  lazy val staticRoutes = get {
+  self: MetricProvider ⇒
+
+  def staticRoutes = get {
     decompressRequest()
     compressResponse() {
       pathSingleSlash {
@@ -35,28 +39,44 @@ trait UIServerRoute extends HttpService {
         getFromResourceDirectory("web")
     }
   }
-  lazy val apiRoutes = pathPrefix("api") {
+
+  def apiRoutes = pathPrefix("api") {
     get {
       _.complete("Todo")
     }
   }
 
-  lazy val valueRoute = path("bucket" / PathMatchers.RestPath) {
-    b =>
-      val bucket = b.toString()
-
-      sse((channel, _) =>
-        implicitly[ActorRefFactory].actorOf(Props(new ValueActor(channel,bucket)))
-      )
+  def valueRoute = path("bucket" / PathMatchers.RestPath) {
+    b ⇒
+      dynamic {
+        implicit val ex = actorRefFactory.dispatcher
+        onSuccess(findMetric(b.toString())) {
+          _ match {
+            case Some(m) ⇒ metricValueStream(m)
+            case _ ⇒ complete(StatusCodes.NotFound)
+          }
+        }
+      }
   }
 
-  lazy val routes = apiRoutes ~ valueRoute ~ staticRoutes
+  def metricValueStream(m: Metric): Route = {
+
+    val buildStreamActor = (sseChannel: ActorRef, lastEvent: Option[String]) ⇒ {
+      val valueActor = implicitly[ActorRefFactory].actorOf(Props(new ValueActor(sseChannel, m)))
+      subscribe(m, valueActor)
+    }
+
+    sse {
+      buildStreamActor
+    }
+  }
+
+  def routes = apiRoutes ~ valueRoute ~ staticRoutes
 
 }
 
 trait UiServer extends SimpleRoutingApp with UIServerRoute {
-  self: ActorSystemProvider with UiServerConfiguration =>
-
+  self: ActorSystemProvider with UiServerConfiguration with MetricProvider ⇒
 
   implicit val sprayActorSystem = this.actorSystem
   startServer("", UiServerPort)(routes)
@@ -67,18 +87,18 @@ trait UiServerConfiguration {
   def UiServerPort: Int
 }
 
-class ValueActor(channel: ActorRef, bucket:String ) extends Actor {
+class ValueActor(channel: ActorRef, metric: Metric) extends Actor {
 
   import scala.concurrent.duration._
   import context._
 
   system.scheduler.schedule(1.second, 1.second, self, "tick")
 
-
-  channel ! RegisterClosedHandler(() => context.stop(self))
+  channel ! RegisterClosedHandler(() ⇒ context.stop(self))
 
   override def receive: Actor.Receive = {
-    case "tick" => channel ! Message(s"hello from $bucket")
+    case v: MetricValueAt[_] ⇒ channel ! Message(toJson(v.asInstanceOf[MetricValueAt[metric.type]]))
   }
 
+  def toJson(mv: MetricValueAt[metric.type]) = s"""{"value" : ${mv.value}, "ts":${mv.timestamp}}"""
 }

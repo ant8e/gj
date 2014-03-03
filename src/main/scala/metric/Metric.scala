@@ -81,9 +81,9 @@ trait Distinct extends MetricStyle {
 trait MetricType {
   type Value
 
-   def valueByteEncoder (x:Value ):Array[Byte]
+  def valueByteEncoder(x: Value): Array[Byte]
 
-   def valueByteDecoder (x:Array[Byte]): Value
+  def valueByteDecoder(x: Array[Byte]): Value
 
 }
 
@@ -100,7 +100,6 @@ trait LongMetricType extends MetricType {
   def valueByteEncoder(x: LongMetricType#Value): Array[Byte] = ByteBuffer.allocate(8).putLong(x).array()
 
   def valueByteDecoder(x: Array[Byte]): LongMetricType#Value = ByteBuffer.wrap(x).getLong
-
 
 }
 
