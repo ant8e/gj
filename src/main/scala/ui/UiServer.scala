@@ -23,12 +23,15 @@ import akka.actor.{ActorRef, Actor, ActorRefFactory, Props}
 import ServerSideEventsDirectives._
 import spray.http.StatusCodes
 import ui.ValueStreamBridge.RegStopHandler
+import spray.httpx.SprayJsonSupport
+import spray.json.DefaultJsonProtocol
+import scala.concurrent.Future
 
 /**
  *
  */
 
-trait UIServerRoute extends HttpService {
+trait UIServerRoute extends HttpService with SprayJsonSupport {
   self: MetricProvider ⇒
 
   def staticRoutes = get {
@@ -41,9 +44,21 @@ trait UIServerRoute extends HttpService {
     }
   }
 
+  case class BucketResponse(name: String)
+
+  object MyJsonProtocol extends DefaultJsonProtocol {
+    implicit val PersonFormat = jsonFormat1(BucketResponse)
+  }
+
   def apiRoutes = pathPrefix("api") {
     get {
-      _.complete("Todo")
+      import MyJsonProtocol._
+      implicit val ex = actorRefFactory.dispatcher
+      path("buckets") {
+        val f: Future[Iterable[BucketResponse]] = listMetrics map (_ map (m => BucketResponse(m.bucket.name)))
+        complete(f)
+      }
+
     }
   }
 

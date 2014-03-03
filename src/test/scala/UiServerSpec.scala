@@ -24,6 +24,7 @@ import spray.http._
 import spray.httpx.unmarshalling._
 
 import spray.httpx.encoding.Gzip
+import spray.json.JsObject
 import spray.testkit.ScalatestRouteTest
 import ui.UIServerRoute
 
@@ -43,6 +44,21 @@ class UiServerSpec extends FunSpec with ScalatestRouteTest with UIServerRoute wi
       }
 
     }
+
+    it("should serve the list of active buckets") {
+      Get("/api/buckets") ~> routes ~> check {
+        contentType must equal(ContentTypes.`application/json`)
+        import spray.json._
+        import DefaultJsonProtocol._
+        import spray.httpx.unmarshalling._
+        import spray.httpx.SprayJsonSupport._
+
+
+     //   val value: List[JsObject] = Gzip.decode(response).as[List[JsObject]].right.get
+       // value must equal (List.empty[JsObject])
+      }
+
+    }
   }
 
   override def unSubscribe(metric: Metric, receiver: ActorRef): Unit = ???
@@ -53,7 +69,7 @@ class UiServerSpec extends FunSpec with ScalatestRouteTest with UIServerRoute wi
    * List all known metrics
    * @return a Future that will complete with the known metrics
    */
-  override def listMetrics: Future[Iterable[Metric]] = ???
+  override def listMetrics: Future[Iterable[Metric]]  = Future.successful(Iterable.empty[Metric])
 
   override def actorSystem: ActorSystem = system
 }

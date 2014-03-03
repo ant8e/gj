@@ -120,7 +120,7 @@ trait MetricServer extends MetricProvider {
     }
   }
 
-  def listMetrics: Future[Iterable[Metric]] = (repo ? MetricListQuery) map (_.asInstanceOf[MetricListResponse].metrics)
+  def listMetrics: Future[Iterable[Metric]] = (repo ? MetricListQuery)  map (_.asInstanceOf[MetricListResponse].metrics)
 
   def subscribe(metric: Metric, receiver: ActorRef) = valueProvider.tell(Subscribe(metric), receiver)
 
