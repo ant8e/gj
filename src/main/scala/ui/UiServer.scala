@@ -18,7 +18,8 @@ package ui
 
 import gj.ActorSystemProvider
 import spray.routing.{PathMatchers, HttpService, SimpleRoutingApp}
-import akka.actor.{Actor, ActorRefFactory, Props}
+import akka.actor.{ActorRef, Actor, ActorRefFactory, Props}
+import ServerSideEventsDirectives._
 
 /**
  *
@@ -40,28 +41,16 @@ trait UIServerRoute extends HttpService {
     }
   }
 
-  lazy val valueRoute = path("bucket" / PathMatchers.Rest) {
-    b:String =>
-      import ServerSideEventsDirectives._
+  lazy val valueRoute = path("bucket" / PathMatchers.RestPath) {
+    b =>
+      val bucket = b.toString()
+
       sse((channel, _) =>
-        implicitly[ActorRefFactory].actorOf(Props(new Actor {
-
-          import scala.concurrent.duration._
-          import context._
-          system.scheduler.schedule(1.second, 1.second, self, "tick")
-
-
-          channel ! RegisterClosedHandler(() => context.stop(self))
-
-         override def receive: Actor.Receive = {
-            case "tick" => channel ! Message(s"hello from $b")
-          }
-
-        }))
+        implicitly[ActorRefFactory].actorOf(Props(new ValueActor(channel,bucket)))
       )
   }
 
-  lazy val routes = apiRoutes ~valueRoute~ staticRoutes
+  lazy val routes = apiRoutes ~ valueRoute ~ staticRoutes
 
 }
 
@@ -76,4 +65,20 @@ trait UiServer extends SimpleRoutingApp with UIServerRoute {
 
 trait UiServerConfiguration {
   def UiServerPort: Int
+}
+
+class ValueActor(channel: ActorRef, bucket:String ) extends Actor {
+
+  import scala.concurrent.duration._
+  import context._
+
+  system.scheduler.schedule(1.second, 1.second, self, "tick")
+
+
+  channel ! RegisterClosedHandler(() => context.stop(self))
+
+  override def receive: Actor.Receive = {
+    case "tick" => channel ! Message(s"hello from $bucket")
+  }
+
 }

@@ -66,9 +66,7 @@ trait ServerSideEventsDirectives {
                 val idString = id.map(id => s"id: $id\n").getOrElse("")
                 val eventString = event.map(ev => s"event: $ev\n").getOrElse("")
                 val dataString = data.split("\n").map(d => s"data: $d\n").mkString
-                val body: String = s"${idString}${eventString}${dataString}\n"
-                println(body)
-                ctx.responder ! MessageChunk(body)
+                ctx.responder ! MessageChunk(s"${idString}${eventString}${dataString}\n")
               case CloseConnection =>
                 ctx.responder ! ChunkedMessageEnd
               case ReceiveTimeout =>
