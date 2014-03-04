@@ -18,11 +18,11 @@
 package gj
 
 import gj.actor._
-import ValuesProvider.{ UnSubscribe, Subscribe }
+import ValuesProvider.{UnSubscribe, Subscribe}
 import akka.actor.ActorSystem
 import akka.util.Timeout
 import org.scalatest.FunSpec
-import akka.testkit.{ ImplicitSender, TestKit, TestActorRef }
+import akka.testkit.{ImplicitSender, TestKit, TestActorRef}
 import akka.pattern.ask
 import org.scalatest.matchers.MustMatchers
 import scala.concurrent.duration._
@@ -32,6 +32,8 @@ import MetricRepository._
 import RawMetricHandler._
 import metric._
 import scala.util.Success
+import ui.ValueStreamBridge
+import ui.ServerSideEventsDirectives.{Message, RegisterClosedHandler}
 
 class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec with ImplicitSender with MustMatchers {
   def this() = this(ActorSystem("ActorsSpec"))
@@ -219,7 +221,9 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
       ref ! SetValue[LongGauge](gauge, 1, 0)
       ref ! StartPublish(gauge)
       ref ! FlushAll
-      expectMsgPF(100.millisecond) { case MetricValueAt(`gauge`, _, 1) ⇒ () }
+      expectMsgPF(100.millisecond) {
+        case MetricValueAt(`gauge`, _, 1) ⇒ ()
+      }
 
     }
 
@@ -228,7 +232,9 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
       ref ! SetValue[LongGauge](gauge, 1, 0)
       ref ! StartPublish(gauge)
       ref ! FlushAll
-      expectMsgPF(100.millisecond) { case MetricValueAt(`gauge`, _, 1) ⇒ () }
+      expectMsgPF(100.millisecond) {
+        case MetricValueAt(`gauge`, _, 1) ⇒ ()
+      }
       ref ! StopPublish(gauge)
       ref ! FlushAll
       expectNoMsg(100.millisecond)
@@ -244,7 +250,9 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
       agreg ! SetValue[LongGauge](gauge, 1, 0)
       ref ! Subscribe(gauge)
       agreg ! FlushAll
-      expectMsgPF(100.millisecond) { case MetricValueAt(`gauge`, _, 1) ⇒ () }
+      expectMsgPF(100.millisecond) {
+        case MetricValueAt(`gauge`, _, 1) ⇒ ()
+      }
     }
     it("should stop publishing on UnSubsribe") {
 
@@ -253,11 +261,25 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
       agreg ! SetValue[LongGauge](gauge, 1, 0)
       ref ! Subscribe(gauge)
       agreg ! FlushAll
-      expectMsgPF(100.millisecond) { case MetricValueAt(`gauge`, _, 1) ⇒ () }
+      expectMsgPF(100.millisecond) {
+        case MetricValueAt(`gauge`, _, 1) ⇒ ()
+      }
       ref ! UnSubscribe(gauge)
       agreg ! FlushAll
       expectNoMsg(100.millisecond)
     }
   }
 
+  describe("Value Stream Bridge") {
+    it("should register a close handler") {
+      val vba = TestActorRef(new ValueStreamBridge(self, counter))
+      expectMsgClass(classOf[RegisterClosedHandler])
+    }
+    it("should format a value") {
+      val vba = TestActorRef(new ValueStreamBridge(self, counter))
+      expectMsgClass(classOf[RegisterClosedHandler])
+      vba ! MetricValueAt[counter.type](counter, 0, 1)
+      expectMsg(Message( """{"value":1,"ts":0}"""))
+    }
+  }
 }

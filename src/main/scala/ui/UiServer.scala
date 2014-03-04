@@ -16,10 +16,10 @@
 
 package ui
 
-import gj.metric.{ MetricValueAt, Metric }
-import gj.{ MetricProvider, ActorSystemProvider }
-import spray.routing.{ Route, PathMatchers, HttpService, SimpleRoutingApp }
-import akka.actor.{ ActorRef, Actor, ActorRefFactory, Props }
+import gj.metric.{MetricValueAt, Metric}
+import gj.{MetricProvider, ActorSystemProvider}
+import spray.routing.{Route, PathMatchers, HttpService, SimpleRoutingApp}
+import akka.actor.{ActorRef, Actor, ActorRefFactory, Props}
 import ServerSideEventsDirectives._
 import spray.http.StatusCodes
 import ui.ValueStreamBridge.RegStopHandler
@@ -132,7 +132,7 @@ class ValueStreamBridge(channel: ActorRef, metric: Metric) extends Actor {
     case RegStopHandler(h) ⇒ stopHandler = h
   }
 
-  def toJson(mv: MetricValueAt[metric.type]) = s"""{"value" : ${mv.value}, "ts":${mv.timestamp}}"""
+  def toJson(mv: MetricValueAt[metric.type]) = s"""{"value":${mv.value},"ts":${mv.timestamp}}"""
 }
 
 object ValueStreamBridge {
