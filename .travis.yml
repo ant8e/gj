@@ -4,4 +4,4 @@ scala:
    - 2.10.4-RC3
 
 notifications:
-  webhooks: https://leanbee.slack.com/services/hooks/travis?token=uqFx2PlrB5rvy0K7ca254LJI
+  webhooks: https://leanbee.slack.com/services/hooks/travis?token=36P0PkU5lW6NGev7qCvSKRLP
