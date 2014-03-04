@@ -47,7 +47,7 @@ trait UIServerRoute extends HttpService with SprayJsonSupport {
   case class BucketResponse(name: String)
 
   object MyJsonProtocol extends DefaultJsonProtocol {
-    implicit val PersonFormat = jsonFormat1(BucketResponse)
+    implicit val bucketResponseFormat = jsonFormat1(BucketResponse)
   }
 
   def apiRoutes = pathPrefix("api") {
@@ -55,8 +55,8 @@ trait UIServerRoute extends HttpService with SprayJsonSupport {
       import MyJsonProtocol._
       implicit val ex = actorRefFactory.dispatcher
       path("buckets") {
-        val f: Future[Iterable[BucketResponse]] = listMetrics map (_ map (m => BucketResponse(m.bucket.name)))
-        complete(f)
+        val list: Future[Iterable[BucketResponse]] = listMetrics map (_ map (m => BucketResponse(m.bucket.name)))
+        complete(list)
       }
 
     }

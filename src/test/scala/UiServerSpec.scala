@@ -15,7 +15,7 @@
  */
 
 import akka.actor.{ActorSystem, ActorRef}
-import gj.metric.Metric
+import gj.metric.{SimpleBucket, LongCounter, Metric}
 import gj.{ActorSystemProvider, MetricProvider}
 import org.scalatest.FunSpec
 import org.scalatest.matchers.MustMatchers
@@ -24,7 +24,6 @@ import spray.http._
 import spray.httpx.unmarshalling._
 
 import spray.httpx.encoding.Gzip
-import spray.json.JsObject
 import spray.testkit.ScalatestRouteTest
 import ui.UIServerRoute
 
@@ -48,28 +47,21 @@ class UiServerSpec extends FunSpec with ScalatestRouteTest with UIServerRoute wi
     it("should serve the list of active buckets") {
       Get("/api/buckets") ~> routes ~> check {
         contentType must equal(ContentTypes.`application/json`)
-        import spray.json._
-        import DefaultJsonProtocol._
-        import spray.httpx.unmarshalling._
-        import spray.httpx.SprayJsonSupport._
+        import spray.httpx.marshalling._
+        import MyJsonProtocol._
 
-
-     //   val value: List[JsObject] = Gzip.decode(response).as[List[JsObject]].right.get
-       // value must equal (List.empty[JsObject])
+        val value: List[BucketResponse] = Gzip.decode(response).as[List[BucketResponse]].right.get
+        value must equal (List(BucketResponse("test.bucket")))
       }
 
     }
   }
 
-  override def unSubscribe(metric: Metric, receiver: ActorRef): Unit = ???
+  override def unSubscribe(metric: Metric, receiver: ActorRef): Unit = {}
 
-  override def subscribe(metric: Metric, receiver: ActorRef): Unit = ???
+  override def subscribe(metric: Metric, receiver: ActorRef): Unit = {}
 
-  /**
-   * List all known metrics
-   * @return a Future that will complete with the known metrics
-   */
-  override def listMetrics: Future[Iterable[Metric]]  = Future.successful(Iterable.empty[Metric])
+  override def listMetrics: Future[Iterable[Metric]]  = Future.successful(List( LongCounter(SimpleBucket("test.bucket"))))
 
   override def actorSystem: ActorSystem = system
 }
