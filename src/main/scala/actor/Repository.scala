@@ -45,8 +45,8 @@ class MetricRepository extends Actor with ActorLogging {
       }
       child ! m
     }
-    case  BucketListQuery ⇒ sender ! BucketListResponse(metricActors.keys.map(metricActorName))
-    case  MetricListQuery ⇒ sender ! MetricListResponse(metricActors.keys)
+    case BucketListQuery ⇒ sender ! BucketListResponse(metricActors.keys.toSeq map (metricActorName))
+    case MetricListQuery ⇒ sender ! MetricListResponse(metricActors.keys.toSeq)
     case sp @ StartPublish(m) ⇒ metricActors.get(m).foreach(_ forward sp)
     case sp @ StopPublish(m) ⇒ metricActors.get(m).foreach(_ forward sp)
     case FlushAll ⇒ metricActors.foreach(p ⇒ p._2 ! Flush(p._1, 0))
@@ -72,11 +72,11 @@ object MetricRepository {
 
   object BucketListQuery
 
-  case class BucketListResponse(buckets: Iterable[String])
+  case class BucketListResponse(buckets: Seq[String])
 
   object MetricListQuery
 
-  case class MetricListResponse(metrics: Iterable[Metric])
+  case class MetricListResponse(metrics: Seq[Metric])
 
   object FlushAll
 

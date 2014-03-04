@@ -57,7 +57,7 @@ trait MetricProvider {
    * List all known metrics
    * @return a Future that will complete with the known metrics
    */
-  def listMetrics: Future[Iterable[Metric]]
+  def listMetrics: Future[Seq[Metric]]
 
   /**
    * Test if a metric is known by the system
@@ -120,7 +120,7 @@ trait MetricServer extends MetricProvider {
     }
   }
 
-  def listMetrics: Future[Iterable[Metric]] = (repo ? MetricListQuery)  map (_.asInstanceOf[MetricListResponse].metrics)
+  def listMetrics: Future[Seq[Metric]] = (repo ? MetricListQuery) map (_.asInstanceOf[MetricListResponse].metrics)
 
   def subscribe(metric: Metric, receiver: ActorRef) = valueProvider.tell(Subscribe(metric), receiver)
 

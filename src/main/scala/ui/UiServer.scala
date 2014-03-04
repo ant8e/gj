@@ -16,10 +16,10 @@
 
 package ui
 
-import gj.metric.{MetricValueAt, Metric}
-import gj.{MetricProvider, ActorSystemProvider}
-import spray.routing.{Route, PathMatchers, HttpService, SimpleRoutingApp}
-import akka.actor.{ActorRef, Actor, ActorRefFactory, Props}
+import gj.metric.{ MetricValueAt, Metric }
+import gj.{ MetricProvider, ActorSystemProvider }
+import spray.routing.{ Route, PathMatchers, HttpService, SimpleRoutingApp }
+import akka.actor.{ ActorRef, Actor, ActorRefFactory, Props }
 import ServerSideEventsDirectives._
 import spray.http.StatusCodes
 import ui.ValueStreamBridge.RegStopHandler
@@ -55,7 +55,7 @@ trait UIServerRoute extends HttpService with SprayJsonSupport {
       import MyJsonProtocol._
       implicit val ex = actorRefFactory.dispatcher
       path("buckets") {
-        val list: Future[Iterable[BucketResponse]] = listMetrics map (_ map (m => BucketResponse(m.bucket.name)))
+        val list: Future[Iterable[BucketResponse]] = listMetrics map (_ map (m ⇒ BucketResponse(m.bucket.name)))
         complete(list)
       }
 
@@ -83,7 +83,7 @@ trait UIServerRoute extends HttpService with SprayJsonSupport {
         actorRefFactory.actorOf(Props(new ValueStreamBridge(sseChannel, m)))
 
       subscribe(m, valueActor)
-      valueActor ! RegStopHandler(() => unSubscribe(m, valueActor))
+      valueActor ! RegStopHandler(() ⇒ unSubscribe(m, valueActor))
     }
 
     sse {
@@ -113,7 +113,6 @@ trait UiServerConfiguration {
   def UiServerPort: Int
 }
 
-
 /**
  * Subscribe to a Metric value stream and push every value to a SSE channel as a JSON representation
  *
@@ -122,7 +121,7 @@ trait UiServerConfiguration {
  */
 class ValueStreamBridge(channel: ActorRef, metric: Metric) extends Actor {
 
-  var stopHandler: () => Unit = () => {}
+  var stopHandler: () ⇒ Unit = () ⇒ {}
   channel ! RegisterClosedHandler(() ⇒ {
     stopHandler()
     context.stop(self)
@@ -130,7 +129,7 @@ class ValueStreamBridge(channel: ActorRef, metric: Metric) extends Actor {
 
   override def receive: Actor.Receive = {
     case v: MetricValueAt[_] ⇒ channel ! Message(toJson(v.asInstanceOf[MetricValueAt[metric.type]]))
-    case RegStopHandler(h) => stopHandler = h
+    case RegStopHandler(h) ⇒ stopHandler = h
   }
 
   def toJson(mv: MetricValueAt[metric.type]) = s"""{"value" : ${mv.value}, "ts":${mv.timestamp}}"""
@@ -138,6 +137,6 @@ class ValueStreamBridge(channel: ActorRef, metric: Metric) extends Actor {
 
 object ValueStreamBridge {
 
-  case class RegStopHandler(hander: () => Unit)
+  case class RegStopHandler(hander: () ⇒ Unit)
 
 }

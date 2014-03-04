@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import akka.actor.{ActorSystem, ActorRef}
-import gj.metric.{SimpleBucket, LongCounter, Metric}
-import gj.{ActorSystemProvider, MetricProvider}
+import akka.actor.{ ActorSystem, ActorRef }
+import gj.metric.{ SimpleBucket, LongCounter, Metric }
+import gj.{ ActorSystemProvider, MetricProvider }
 import org.scalatest.FunSpec
 import org.scalatest.matchers.MustMatchers
 import scala.concurrent.Future
@@ -51,7 +51,7 @@ class UiServerSpec extends FunSpec with ScalatestRouteTest with UIServerRoute wi
         import MyJsonProtocol._
 
         val value: List[BucketResponse] = Gzip.decode(response).as[List[BucketResponse]].right.get
-        value must equal (List(BucketResponse("test.bucket")))
+        value must equal(List(BucketResponse("test.bucket")))
       }
 
     }
@@ -61,7 +61,7 @@ class UiServerSpec extends FunSpec with ScalatestRouteTest with UIServerRoute wi
 
   override def subscribe(metric: Metric, receiver: ActorRef): Unit = {}
 
-  override def listMetrics: Future[Iterable[Metric]]  = Future.successful(List( LongCounter(SimpleBucket("test.bucket"))))
+  override def listMetrics: Future[Seq[Metric]] = Future.successful(List(LongCounter(SimpleBucket("test.bucket"))))
 
   override def actorSystem: ActorSystem = system
 }
