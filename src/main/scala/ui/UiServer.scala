@@ -55,8 +55,9 @@ trait UIServerRoute extends HttpService with SprayJsonSupport {
       import MyJsonProtocol._
       implicit val ex = actorRefFactory.dispatcher
       path("buckets") {
-        val list: Future[Iterable[BucketResponse]] = listMetrics map (_ map (m ⇒ BucketResponse(m.bucket.name)))
-        complete(list)
+        complete {
+          listMetrics map (_ map (m ⇒ BucketResponse(m.bucket.name)))
+        }
       }
 
     }
