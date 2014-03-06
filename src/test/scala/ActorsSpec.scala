@@ -192,11 +192,11 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
   }
 
   describe("Metric repository Actor") {
-    it("should start with an empty list of active buckets") {
+    it("should start with one size list of active buckets") {
       val ref = TestActorRef(new MetricRepository)
       val future = ref ? BucketListQuery
       val Success(v: BucketListResponse) = future.value.get
-      v.buckets must have size (0)
+      v.buckets must have size (1)
     }
 
     it("should maintain a list of active buckets") {
@@ -204,7 +204,7 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
       ref ! SetValue[LongGauge](gauge, 1, 0)
       val future = ref ? BucketListQuery
       val Success(v: BucketListResponse) = future.value.get
-      v.buckets must have size (1)
+      v.buckets must have size (2)
       v.buckets must contain("G." + b.name)
     }
     it("should maintain a list of active metric") {
@@ -212,7 +212,7 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
       ref ! SetValue[LongGauge](gauge, 1, 0)
       val future = ref ? MetricListQuery
       val Success(v: MetricListResponse) = future.value.get
-      v.metrics must have size (1)
+      v.metrics must have size (2)
       v.metrics must contain(gauge.asInstanceOf[Metric])
     }
 

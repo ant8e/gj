@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
-import gj.metric.{ SimpleBucket, LongCounter, Metric }
+package gj
+
+import gj.metric.{SimpleBucket, LongCounter, Metric}
 import org.scalatest.FunSpec
-import storage.{ ByteCaskMetricStore, MemoryMetricStore, MetricStore }
+import storage.{ByteCaskMetricStore, MemoryMetricStore, MetricStore}
+
 
 /**
  *
@@ -50,6 +53,7 @@ class MemoryStoreSpec extends FunSpec with StorageSpec {
     it should behave like storage[LongCounter](store, 42L)
   }
 }
+
 class ByteCaskStoreSpec extends FunSpec with StorageSpec {
 
   describe("A ByteCaskStore ") {
