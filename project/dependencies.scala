@@ -2,8 +2,8 @@ import sbt._
 
 object Dependencies {
 
-  val sprayVersion = "1.2.0"
-  val akkaVersion = "2.2.3"
+  val sprayVersion = "1.3.0"
+  val akkaVersion = "2.3.0"
 
   val resolvers = Seq(
     "Typesafe repo" at "http://repo.typesafe.com/typesafe/releases/",
