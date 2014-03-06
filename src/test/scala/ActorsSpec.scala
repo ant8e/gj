@@ -272,7 +272,7 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
 
   describe("Value Stream Bridge") {
     it("should register a close handler") {
-      val vba = TestActorRef(new ValueStreamBridge(self, counter))
+      TestActorRef(new ValueStreamBridge(self, counter))
       expectMsgClass(classOf[RegisterClosedHandler])
     }
     it("should format a value") {
