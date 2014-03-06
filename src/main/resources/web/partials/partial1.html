@@ -1,9 +1,9 @@
-<p>This is the partial for view 1.</p>
-
 
 <div>
     <highchart id="chart1" config="chartConfig"></highchart>
 </div>
 
 
+
+<select ng-model="bucket" ng-options="b.name for b in buckets"></select>
 <div ng-repeat="b in buckets"> {{b.name}}</div>

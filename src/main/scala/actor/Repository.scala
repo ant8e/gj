@@ -31,19 +31,15 @@ class MetricRepository extends Actor with ActorLogging {
 
   private var metricActors = Map[Metric, ActorRef]()
 
+  val messageCountMetric = LongCounter(SimpleBucket("gj.messages"))
+
+  val messageCountActor = actorFor(messageCountMetric)
+
+
   def receive = {
     case m: MetricOperation[_] ⇒ {
-      val child = {
-        metricActors.get(m.metric) match {
-          case Some(c) ⇒ c
-          case None ⇒ {
-            val ret = actorOf(buildMetricActor(m.metric), metricActorName(m.metric))
-            metricActors = metricActors + (m.metric -> ret)
-            ret
-          }
-        }
-      }
-      child ! m
+      actorFor(m.metric) ! m
+      messageCountActor ! Increment[messageCountMetric.type](messageCountMetric,1,m.ts)
     }
     case BucketListQuery ⇒ sender ! BucketListResponse(metricActors.keys.toSeq map (metricActorName))
     case MetricListQuery ⇒ sender ! MetricListResponse(metricActors.keys.toSeq)
@@ -51,6 +47,16 @@ class MetricRepository extends Actor with ActorLogging {
     case sp@StopPublish(m) ⇒ metricActors.get(m).foreach(_ forward sp)
     case FlushAll ⇒ metricActors.foreach(p ⇒ p._2 ! Flush(p._1, 0))
 
+  }
+
+
+  def actorFor(m: Metric): ActorRef = metricActors.get(m) match {
+    case Some(c) ⇒ c
+    case None ⇒ {
+      val ret = actorOf(buildMetricActor(m), metricActorName(m))
+      metricActors = metricActors + (m -> ret)
+      ret
+    }
   }
 
   private def metricActorName(m: Metric) = s"${m.styleTag}.${m.bucket.name}"
