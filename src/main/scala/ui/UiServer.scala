@@ -16,16 +16,17 @@
 
 package ui
 
-import gj.metric.{MetricValueAt, Metric}
-import gj.{MetricProvider, ActorSystemProvider}
-import spray.routing.{Route, PathMatchers, HttpService, SimpleRoutingApp}
-import akka.actor.{ActorRef, Actor, ActorRefFactory, Props}
+import gj.metric.{ MetricValueAt, Metric }
+import gj.{ MetricProvider, ActorSystemProvider }
+import spray.routing.{ Route, PathMatchers, HttpService, SimpleRoutingApp }
+import akka.actor.{ ActorRef, Actor, Props }
 import ServerSideEventsDirectives._
 import spray.http.StatusCodes
 import ui.ValueStreamBridge.RegStopHandler
 import spray.httpx.SprayJsonSupport
 import spray.json.DefaultJsonProtocol
-import scala.concurrent.Future
+import spray.can.Http
+import scala.util.{ Failure, Success }
 
 /**
  *
@@ -52,8 +53,8 @@ trait UIServerRoute extends HttpService with SprayJsonSupport {
 
   def apiRoutes = pathPrefix("api") {
     get {
-      import MyJsonProtocol._
       implicit val ex = actorRefFactory.dispatcher
+      import MyJsonProtocol._
       path("buckets") {
         complete {
           listMetrics map (_ map (m ⇒ BucketResponse(m.bucket.name)))
@@ -103,7 +104,17 @@ trait UiServer extends SimpleRoutingApp with UIServerRoute {
   self: ActorSystemProvider with UiServerConfiguration with MetricProvider ⇒
 
   implicit val sprayActorSystem = this.actorSystem
-  startServer("", UiServerPort)(routes)
+
+  import sprayActorSystem.dispatcher
+
+  startServer(uiServerBindAddress.getOrElse("::"), uiServerPort)(routes).onComplete {
+    case Success(Http.Bound(address)) ⇒ println("\nBound ui-server to " + address)
+    case Failure(e) ⇒ {
+
+      sprayActorSystem.log.error("Unable to start " + e.getMessage)
+      sprayActorSystem.shutdown()
+    }
+  }
 
 }
 
@@ -111,7 +122,9 @@ trait UiServer extends SimpleRoutingApp with UIServerRoute {
  * UI Server configuration
  */
 trait UiServerConfiguration {
-  def UiServerPort: Int
+  def uiServerPort: Int
+
+  def uiServerBindAddress: Option[String]
 }
 
 /**

@@ -17,7 +17,6 @@ package gj
 
 import akka.actor.{ ActorSystem, ActorRef }
 import gj.metric.{ SimpleBucket, LongCounter, Metric }
-import gj.{ ActorSystemProvider, MetricProvider }
 import org.scalatest.FunSpec
 import org.scalatest.matchers.MustMatchers
 import scala.concurrent.Future
@@ -48,9 +47,7 @@ class UiServerSpec extends FunSpec with ScalatestRouteTest with UIServerRoute wi
     it("should serve the list of active buckets") {
       Get("/api/buckets") ~> routes ~> check {
         contentType must equal(ContentTypes.`application/json`)
-        import spray.httpx.marshalling._
         import MyJsonProtocol._
-
         val value: List[BucketResponse] = Gzip.decode(response).as[List[BucketResponse]].right.get
         value must equal(List(BucketResponse("test.bucket")))
       }

@@ -16,10 +16,9 @@
 
 package gj
 
-import gj.metric.{SimpleBucket, LongCounter, Metric}
+import gj.metric.{ SimpleBucket, LongCounter, Metric }
 import org.scalatest.FunSpec
-import storage.{ByteCaskMetricStore, MemoryMetricStore, MetricStore}
-
+import storage.{ ByteCaskMetricStore, MemoryMetricStore, MetricStore }
 
 /**
  *

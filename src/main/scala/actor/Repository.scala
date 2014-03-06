@@ -16,10 +16,10 @@
 
 package gj.actor
 
-import akka.actor.{ActorLogging, ActorRef, Actor, Props}
+import akka.actor.{ ActorLogging, ActorRef, Actor, Props }
 import gj.metric._
 import scala.Some
-import storage.{MemoryMetricStore, MetricStore}
+import storage.{ MemoryMetricStore, MetricStore }
 
 /**
  * Handle the metric operation, store and aggregate all the metrics
@@ -35,20 +35,18 @@ class MetricRepository extends Actor with ActorLogging {
 
   val messageCountActor = actorFor(messageCountMetric)
 
-
   def receive = {
     case m: MetricOperation[_] ⇒ {
       actorFor(m.metric) ! m
-      messageCountActor ! Increment[messageCountMetric.type](messageCountMetric,1,m.ts)
+      messageCountActor ! Increment[messageCountMetric.type](messageCountMetric, 1, m.ts)
     }
     case BucketListQuery ⇒ sender ! BucketListResponse(metricActors.keys.toSeq map (metricActorName))
     case MetricListQuery ⇒ sender ! MetricListResponse(metricActors.keys.toSeq)
-    case sp@StartPublish(m) ⇒ metricActors.get(m).foreach(_ forward sp)
-    case sp@StopPublish(m) ⇒ metricActors.get(m).foreach(_ forward sp)
+    case sp @ StartPublish(m) ⇒ metricActors.get(m).foreach(_ forward sp)
+    case sp @ StopPublish(m) ⇒ metricActors.get(m).foreach(_ forward sp)
     case FlushAll ⇒ metricActors.foreach(p ⇒ p._2 ! Flush(p._1, 0))
 
   }
-
 
   def actorFor(m: Metric): ActorRef = metricActors.get(m) match {
     case Some(c) ⇒ c

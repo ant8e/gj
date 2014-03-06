@@ -36,12 +36,12 @@ trait MetricServerConfiguration {
    * if not specified will try to bind to all interface.
    *
    */
-  def localAddress: Option[String]
+  def metricLocalAddress: Option[String]
 
   /**
    * the port number
    */
-  def port: Int
+  def metricServerPort: Int
 }
 
 trait ActorSystemProvider {
@@ -97,26 +97,23 @@ trait MetricServer extends MetricProvider {
   // and our actual server "service" actor
   private val server = system.actorOf(MetricUdpListener.props(handler), name = "metric-server")
 
-  // we bind the server to a port on the supplied address and hook
-  // in a continuation that informs us when bound
-  private val endpoint = localAddress match {
-    case Some(a) ⇒ new InetSocketAddress(InetAddress.getByName(a), port)
-    case _ ⇒ new InetSocketAddress(port)
-  }
+  private val endpoint = new InetSocketAddress(metricLocalAddress.getOrElse("::"), metricServerPort)
+
   private implicit val bindingTimeout = Timeout(1.second)
 
   // execution context for the future
 
   import system.dispatcher
 
-  //
+  // we bind the server to a port on the supplied address and hook
+  // in a continuation that informs us when bound
   (IO(Udp) ? Udp.Bind(server, endpoint)).onSuccess {
     case Udp.Bound(address) ⇒
       println("\nBound metric-server to " + address)
 
     case Udp.CommandFailed(c) ⇒ {
       system.log.error("Unable to start " + c.failureMessage.toString)
-      //      system.shutdown()
+      system.shutdown()
     }
   }
 
@@ -150,8 +147,8 @@ object MetricUdpListener {
 
 object Main extends {
   val actorSystem: ActorSystem = ActorSystem("Metric-Server")
-  val port: Int = 12344
-  val localAddress = Some("localhost")
-  val UiServerPort = 8080
+  val metricServerPort: Int = 12344
+  val metricLocalAddress = None
+  val uiServerPort = 8080
+  val uiServerBindAddress = None
 } with App with MetricServer with MetricServerConfiguration with ActorSystemProvider with UiServer with UiServerConfiguration
-
