@@ -27,7 +27,7 @@ import akka.util.Timeout
 import akka.actor._
 import gj.actor._
 import scala.concurrent.Future
-import ui.{ UiServerConfiguration, UiServer }
+import ui.{UiServerConfiguration, UiServer}
 import scala.language.postfixOps
 
 trait MetricServerConfiguration {
@@ -109,7 +109,7 @@ trait MetricServer extends MetricProvider {
   // in a continuation that informs us when bound
   (IO(Udp) ? Udp.Bind(server, endpoint)).onSuccess {
     case Udp.Bound(address) ⇒
-      println("\nBound metric-server to " + address)
+      system.log.info("Bound metric-server to " + address)
 
     case Udp.CommandFailed(c) ⇒ {
       system.log.error("Unable to start " + c.failureMessage.toString)
@@ -150,5 +150,5 @@ object Main extends {
   val metricServerPort: Int = 12344
   val metricLocalAddress = None
   val uiServerPort = 8080
-  val uiServerBindAddress = None
+  override val uiServerBindAddress = UiServerConfiguration.allInterfaces
 } with App with MetricServer with MetricServerConfiguration with ActorSystemProvider with UiServer with UiServerConfiguration

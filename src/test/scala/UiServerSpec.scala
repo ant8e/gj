@@ -25,12 +25,12 @@ import spray.httpx.unmarshalling._
 
 import spray.httpx.encoding.Gzip
 import spray.testkit.ScalatestRouteTest
-import ui.UIServerRoute
+import ui.UIService
 
 /**
  *
  */
-class UiServerSpec extends FunSpec with ScalatestRouteTest with UIServerRoute with MustMatchers with MetricProvider with ActorSystemProvider {
+class UiServerSpec extends FunSpec with ScalatestRouteTest with UIService with MustMatchers with MetricProvider with ActorSystemProvider {
   def actorRefFactory = system
 
   val `text/html(UTF8)` = ContentType(MediaTypes.`text/html`, HttpCharsets.`UTF-8`)
@@ -62,4 +62,6 @@ class UiServerSpec extends FunSpec with ScalatestRouteTest with UIServerRoute wi
   override def listMetrics: Future[Seq[Metric]] = Future.successful(List(LongCounter(SimpleBucket("test.bucket"))))
 
   override def actorSystem: ActorSystem = system
+
+  override def metricProvider: MetricProvider = this
 }

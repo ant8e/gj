@@ -1,3 +1,5 @@
+
+
 /*
  * Copyright © 2014 Antoine Comte
  *
@@ -16,59 +18,141 @@
 
 package ui
 
-import gj.metric.{ MetricValueAt, Metric }
-import gj.{ MetricProvider, ActorSystemProvider }
-import spray.routing.{ Route, PathMatchers, HttpService, SimpleRoutingApp }
-import akka.actor.{ ActorRef, Actor, Props }
-import ServerSideEventsDirectives._
+import akka.actor._
+import gj.metric.{MetricValueAt, Metric}
+import gj.{MetricProvider, ActorSystemProvider}
+import spray.routing._
+import akka.actor.{ActorRefFactory, ActorRef, Actor, Props}
 import spray.http.StatusCodes
-import ui.ValueStreamBridge.RegStopHandler
 import spray.httpx.SprayJsonSupport
 import spray.json.DefaultJsonProtocol
 import spray.can.Http
-import scala.util.{ Failure, Success }
+import akka.io.IO
+import akka.pattern.ask
+import akka.util.Timeout
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext
+import scala.Some
+import ui.ValueStreamBridge.RegStopHandler
 
 /**
- *
+ * UI Server configuration
  */
+trait UiServerConfiguration {
+  /**
+   * UI server listening port
+   */
+  def uiServerPort: Int
 
-trait UIServerRoute extends HttpService with SprayJsonSupport {
-  self: MetricProvider ⇒
+  /**
+   * Specific interface address the server tries to bind to.
+   * If None, the server will try to bind the default address specified by [[UiServerConfiguration.defaultInterface]]]
+   */
+  def uiServerBindAddress: Option[String] = None
 
-  def staticRoutes = get {
-    decompressRequest()
-    compressResponse() {
-      pathSingleSlash {
-        getFromResource("web/index.html")
-      } ~
-        getFromResourceDirectory("web")
-    }
+}
+
+object UiServerConfiguration {
+
+  /**
+   * Default interface
+   */
+  val defaultInterface = "localhost"
+
+
+  /**
+   * represent all interfaces (IPV4 & IPV6)
+   * @example uiServerBindAddress = allInterfaces
+   */
+  val allInterfaces = Some("::")
+}
+
+/**
+ * Spray HttpService to serve the UI (css,html,js) + SSE value streams
+ */
+trait UiServer {
+  self: ActorSystemProvider with UiServerConfiguration with MetricProvider ⇒
+
+  val serviceName = "gj-ui-service"
+
+  //Getting the actor system from the mixed ActorSystemProvider trait and making it implicit
+  private implicit val system: ActorSystem = actorSystem
+
+  //Creating the UiServiceActor, passing the mixed in MetricProvider trait
+  private val serviceActor = system.actorOf(Props(new UIServiceActor(this)), serviceName)
+
+  private implicit val ec: ExecutionContext = system.dispatcher
+  private implicit val bindingTimeout = Timeout(1.second)
+
+  //Binding the service actor to the address and port supplied by the UiServerConfiguration trait
+  private val interface: String = uiServerBindAddress.getOrElse(UiServerConfiguration.defaultInterface)
+  (IO(Http) ? Http.Bind(serviceActor, interface, uiServerPort)).onSuccess {
+    case Http.Bound(address) => system.log.info(s"$serviceName bound to ${address.toString}")
+    case e: Any => system.log.error(s"Unable to bind $serviceName : $e ")
+      system.shutdown()
   }
 
+
+}
+
+/**
+ * Service Actor to run our Service
+ */
+
+class UIServiceActor(val metricProvider: MetricProvider) extends Actor with UIService {
+
+  override def receive = runRoute(routes)
+
+  override def actorRefFactory: ActorRefFactory = context
+}
+
+/**
+ * This trait defines the UI service behavior
+ */
+trait UIService extends HttpService with SprayJsonSupport {
+  /**
+   * a MetricProvider needs to be supplied by the class mixing us in
+   * @return
+   */
+  def metricProvider: MetricProvider
+
+  /**
+   * representation of a Bucket
+   * @param name
+   */
   case class BucketResponse(name: String)
 
+  /**
+   * Json Serialisation protocol
+   */
   object MyJsonProtocol extends DefaultJsonProtocol {
     implicit val bucketResponseFormat = jsonFormat1(BucketResponse)
   }
 
+  import MyJsonProtocol._
+
+  /**
+   *
+   */
   def apiRoutes = pathPrefix("api") {
     get {
       implicit val ex = actorRefFactory.dispatcher
-      import MyJsonProtocol._
       path("buckets") {
         complete {
-          listMetrics map (_ map (m ⇒ BucketResponse(m.bucket.name)))
+          metricProvider.listMetrics map (_ map (m ⇒ BucketResponse(m.bucket.name)))
         }
       }
-
     }
   }
 
-  def valueRoute = path("bucket" / PathMatchers.RestPath) {
+  /**
+   * values route
+   */
+  def valuesRoute = path("values" / PathMatchers.RestPath) {
     b ⇒
       dynamic {
         implicit val ex = actorRefFactory.dispatcher
-        onSuccess(findMetric(b.toString())) {
+        onSuccess(metricProvider findMetric (b.toString())) {
           _ match {
             case Some(m) ⇒ metricValueStream(m)
             case _ ⇒ complete(StatusCodes.NotFound)
@@ -77,54 +161,39 @@ trait UIServerRoute extends HttpService with SprayJsonSupport {
       }
   }
 
-  def metricValueStream(m: Metric): Route = {
-
-    val buildStreamActor = (sseChannel: ActorRef, lastEvent: Option[String]) ⇒ {
-
-      val valueActor: ActorRef =
-        actorRefFactory.actorOf(Props(new ValueStreamBridge(sseChannel, m)))
-
-      subscribe(m, valueActor)
-      valueActor ! RegStopHandler(() ⇒ unSubscribe(m, valueActor))
-    }
-
+  /**
+   * Build a route that stream the values of the specified metric
+   * @param m the metric
+   * @return A sse route, streaming an event for each value
+   */
+  def metricValueStream(m: Metric)(implicit actorRefFactory: ActorRefFactory): Route = {
+    import ServerSideEventsDirectives.sse
     sse {
-      buildStreamActor
+      (sseChannel: ActorRef, lastEvent: Option[String]) ⇒ {
+        val valueActor = actorRefFactory.actorOf(Props(new ValueStreamBridge(sseChannel, m)))
+        metricProvider subscribe(m, valueActor)
+        valueActor ! ValueStreamBridge.RegStopHandler(() ⇒ metricProvider unSubscribe(m, valueActor))
+      }
     }
   }
 
-  def routes = apiRoutes ~ valueRoute ~ staticRoutes
 
-}
-
-/**
- * Spray HttpService to serve the UI (css,html,js) + SSE value streams
- */
-trait UiServer extends SimpleRoutingApp with UIServerRoute {
-  self: ActorSystemProvider with UiServerConfiguration with MetricProvider ⇒
-
-  implicit val sprayActorSystem = this.actorSystem
-
-  import sprayActorSystem.dispatcher
-
-  startServer(uiServerBindAddress.getOrElse("::"), uiServerPort)(routes).onComplete {
-    case Success(Http.Bound(address)) ⇒ println("\nBound ui-server to " + address)
-    case Failure(e) ⇒ {
-
-      sprayActorSystem.log.error("Unable to start " + e.getMessage)
-      sprayActorSystem.shutdown()
+  /**
+   * Route for the static content (hmtl,css,....)
+   */
+  def staticRoutes = get {
+    decompressRequest()
+    compressResponse() {
+      // serve the index file if nothing specified the content of the web directory
+      pathSingleSlash {
+        getFromResource("web/index.html")
+      } ~ // or the content of the web directory
+        getFromResourceDirectory("web")
     }
   }
 
-}
+  def routes = apiRoutes ~ valuesRoute ~ staticRoutes
 
-/**
- * UI Server configuration
- */
-trait UiServerConfiguration {
-  def uiServerPort: Int
-
-  def uiServerBindAddress: Option[String]
 }
 
 /**
@@ -134,6 +203,8 @@ trait UiServerConfiguration {
  * @param metric
  */
 class ValueStreamBridge(channel: ActorRef, metric: Metric) extends Actor {
+
+  import ServerSideEventsDirectives.{Message, RegisterClosedHandler}
 
   var stopHandler: () ⇒ Unit = () ⇒ {}
   channel ! RegisterClosedHandler(() ⇒ {

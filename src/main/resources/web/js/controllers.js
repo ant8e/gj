@@ -51,7 +51,7 @@ myAppControlers.controller('MyCtrl1', ['$scope', 'Bucket', function ($scope, Buc
 
     /** start listening on messages from selected room */
     $scope.listen = function () {
-        $scope.chatFeed = new EventSource("/bucket/test.bucket");
+        $scope.chatFeed = new EventSource("/values/test.bucket");
         $scope.chatFeed.addEventListener("message", $scope.addMsg, false);
     };
 
