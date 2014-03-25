@@ -1,7 +1,6 @@
 language: scala
 scala:
-   - 2.10.3
-   - 2.10.4-RC3
+   - 2.10.4
 
 notifications:
   webhooks: https://leanbee.slack.com/services/hooks/travis?token=36P0PkU5lW6NGev7qCvSKRLP
