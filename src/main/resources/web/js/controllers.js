@@ -16,7 +16,8 @@ myAppControlers.controller('MyCtrl1', ['$scope', 'Bucket', function ($scope, Buc
     $scope.chartConfig = {
         options: {
             chart: {
-                type: 'spline'
+                type: 'spline',
+                animation: Highcharts.svg,
             },
             plotOptions: {
                 series: {
@@ -35,8 +36,22 @@ myAppControlers.controller('MyCtrl1', ['$scope', 'Bucket', function ($scope, Buc
         credits: {
             enabled: true
         },
-        loading: false
-    };
+        loading: false,
+
+        initFunction : function (chart) {
+        var series = chart.series[0];
+        var addMsg = function (msg) {
+            var items = JSON.parse(msg.data);
+            console.log(msg.data);
+            series.addPoint([items.ts, items.value], true, true);
+
+        };
+        var feed = new EventSource("/values/test.bucket");
+        feed.addEventListener("message", addMsg, false);
+
+    }
+
+};
 
 
     $scope.addMsg = function (msg) {
@@ -50,12 +65,12 @@ myAppControlers.controller('MyCtrl1', ['$scope', 'Bucket', function ($scope, Buc
     };
 
     /** start listening on messages from selected room */
-    $scope.listen = function () {
-        $scope.chatFeed = new EventSource("/values/test.bucket");
-        $scope.chatFeed.addEventListener("message", $scope.addMsg, false);
-    };
-
-    $scope.listen();
+    /*  $scope.listen = function () {
+     $scope.chatFeed = new EventSource("/values/test.bucket");
+     $scope.chatFeed.addEventListener("message", $scope.addMsg, false);
+     };
+     */
+    //$scope.listen();
 
     $scope.buckets = Bucket.query();
 
