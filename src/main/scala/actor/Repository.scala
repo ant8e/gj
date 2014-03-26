@@ -141,7 +141,7 @@ trait ValueAggregator[T <: Metric] {
     case m: StopPublish ⇒ pub = None
   }
 
-  def publish = pub.foreach(_ ! MetricValueAt[T](metric, 0, _value))
+  def publish = pub.foreach(_ ! MetricValueAt[T](metric, System.currentTimeMillis(), _value))
 }
 
 class CounterAggregatorWorkerActor(val metric: LongCounter) extends Actor with ValueAggregator[LongCounter] with MemoryMetricStore[LongCounter] {
