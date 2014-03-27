@@ -16,13 +16,13 @@
 
 package gj
 
-import gj.actor.MetricRepository.{ MetricListResponse, MetricListQuery }
-import gj.actor.ValuesProvider.{ UnSubscribe, Subscribe }
+import gj.actor.MetricRepository.{MetricListResponse, MetricListQuery}
+import gj.actor.ValuesProvider.{UnSubscribe, Subscribe}
 import gj.metric.Metric
-import java.net.{ InetAddress, InetSocketAddress }
+import java.net.{InetAddress, InetSocketAddress}
 import scala.concurrent.duration._
 import akka.pattern.ask
-import akka.io.{ Udp, IO }
+import akka.io.{Udp, IO}
 import akka.util.Timeout
 import akka.actor._
 import gj.actor._
@@ -30,18 +30,11 @@ import scala.concurrent.Future
 import ui.{UiServerConfiguration, UiServer}
 import scala.language.postfixOps
 
-trait MetricServerConfiguration {
-  /**
-   * The address of the interface to bind the server to.
-   * if not specified will try to bind to all interface.
-   *
-   */
-  def metricLocalAddress: Option[String]
 
-  /**
-   * the port number
-   */
-  def metricServerPort: Int
+trait ComponentConfiguration {
+  type Config
+
+  def config: Config
 }
 
 trait ActorSystemProvider {
@@ -79,8 +72,24 @@ trait MetricProvider {
 
 }
 
-trait MetricServer extends MetricProvider {
-  self: MetricServerConfiguration with ActorSystemProvider ⇒
+trait MetricServerConfiguration {
+  /**
+   * The address of the interface to bind the server to.
+   * if not specified will try to bind to all interface.
+   *
+   */
+  def metricLocalAddress: Option[String]
+
+  /**
+   * the port number
+   */
+  def metricServerPort: Int
+}
+
+trait MetricServer extends MetricProvider with ComponentConfiguration {
+  self: ActorSystemProvider ⇒
+
+  type Config <: MetricServerConfiguration
 
   // we need an ActorSystem to host our application in
   private implicit val system: ActorSystem = actorSystem
@@ -97,7 +106,7 @@ trait MetricServer extends MetricProvider {
   // and our actual server "service" actor
   private val server = system.actorOf(MetricUdpListener.props(handler), name = "metric-server")
 
-  private val endpoint = new InetSocketAddress(metricLocalAddress.getOrElse("::"), metricServerPort)
+  private val endpoint = new InetSocketAddress(config.metricLocalAddress.getOrElse("::"), config.metricServerPort)
 
   private implicit val bindingTimeout = Timeout(1.second)
 
@@ -145,10 +154,16 @@ object MetricUdpListener {
   def props(ref: ActorRef): Props = Props(new MetricUdpListener(ref))
 }
 
-object Main extends {
-  val actorSystem: ActorSystem = ActorSystem("Metric-Server")
-  val metricServerPort: Int = 12344
-  val metricLocalAddress = None
-  val uiServerPort = 8080
-  override val uiServerBindAddress = UiServerConfiguration.allInterfaces
-} with App with MetricServer with MetricServerConfiguration with ActorSystemProvider with UiServer with UiServerConfiguration
+object Main extends App with MetricServer with ActorSystemProvider with UiServer {
+  lazy val actorSystem: ActorSystem = ActorSystem("Metric-Server")
+
+  trait Config extends MetricServerConfiguration with UiServerConfiguration
+
+  object config extends Config {
+    val metricServerPort: Int = 12344
+    val metricLocalAddress = None
+    val uiServerPort = 8080
+    override val uiServerBindAddress = UiServerConfiguration.allInterfaces
+  }
+
+}

@@ -16,10 +16,11 @@
 
 import java.net.InetSocketAddress
 import scala.concurrent.duration._
-import akka.io.{ Udp, IO }
-import akka.util.{ ByteString, Timeout }
+import akka.io.{Udp, IO}
+import akka.util.{ByteString, Timeout}
 import akka.actor._
 import akka.io.Udp.SimpleSenderReady
+import scala.util.Random
 
 object Client extends App {
   // we need an ActorSystem to host our application in
@@ -36,14 +37,20 @@ object Client extends App {
 
   val io: ActorRef = IO(Udp)
 
-  class MySender extends Actor {
+  class MySender(bucketName: String) extends Actor {
     def receive: Actor.Receive = {
       case "Go" ⇒ io ! Udp.SimpleSender
-      case SimpleSenderReady ⇒ context.system.scheduler.schedule(0.seconds, 100.milliseconds, sender, Udp.Send(ByteString("test.bucket:1|c"), endpoint))
+      case SimpleSenderReady ⇒
+        val to = sender
+        context.system.scheduler.schedule(0.seconds, 100.milliseconds) {
+          val i: Int = Random.nextInt(5) + 1
+          to ! Udp.Send(ByteString(s"$bucketName:$i|c"), endpoint)
+        }
     }
   }
 
-  system.actorOf(Props[MySender]) ! "Go"
+  for (i <- 0 until 10)
+    system.actorOf(Props(classOf[MySender], s"test.bucket.$i")) ! "Go"
 
 }
 
