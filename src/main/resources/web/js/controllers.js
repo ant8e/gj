@@ -41,12 +41,12 @@ myAppControlers.controller('MyCtrl1', ['$scope', 'Bucket', function ($scope, Buc
         initFunction : function (chart) {
         var series = chart.series[0];
         var addMsg = function (msg) {
-            var items = JSON.parse(msg.data);
-            console.log(msg.data);
-            series.addPoint([items.ts, items.value], true, true);
+            var items = JSON.parse(msg.data),
+            shift = series.data.length > 20
+            series.addPoint([items.ts, items.value], true, shift);
 
         };
-        var feed = new EventSource("/values/test.bucket");
+        var feed = new EventSource("/values/test.bucket.0");
         feed.addEventListener("message", addMsg, false);
 
     }
