@@ -16,10 +16,10 @@
 
 package gj.actor
 
-import akka.actor.{ ActorLogging, ActorRef, Actor, Props }
+import akka.actor.{ActorLogging, ActorRef, Actor, Props}
 import gj.metric._
 import scala.Some
-import storage.{ MemoryMetricStore, MetricStore }
+import storage.{MemoryMetricStore, MetricStore}
 
 /**
  * Handle the metric operation, store and aggregate all the metrics
@@ -42,8 +42,8 @@ class MetricRepository extends Actor with ActorLogging {
     }
     case BucketListQuery ⇒ sender ! BucketListResponse(metricActors.keys.toSeq map (metricActorName))
     case MetricListQuery ⇒ sender ! MetricListResponse(metricActors.keys.toSeq)
-    case sp @ StartPublish(m) ⇒ metricActors.get(m).foreach(_ forward sp)
-    case sp @ StopPublish(m) ⇒ metricActors.get(m).foreach(_ forward sp)
+    case sp@StartPublish(m) ⇒ metricActors.get(m).foreach(_ forward sp)
+    case sp@StopPublish(m) ⇒ metricActors.get(m).foreach(_ forward sp)
     case FlushAll ⇒ metricActors.foreach(p ⇒ p._2 ! Flush(p._1, 0))
 
   }
@@ -105,23 +105,30 @@ trait ValueAggregator[T <: Metric] {
 
   def plus(v1: T#Value, v2: T#Value): T#Value
 
-  protected[this] var _value: T#Value = resetValue
+  private[this] var _value: T#Value = resetValue
+  private[this] var published = false
+
+  protected[this] def value_=(v: T#Value): Unit = {
+    published = false
+    _value = v
+  }
+
 
   def value = _value
 
-  private[this] def reset = _value = resetValue
+  private[this] def reset = value = resetValue
 
   def incrementIt: Receive = {
-    case Increment(_, v: T#Value, _) ⇒ _value = plus(_value, v)
+    case Increment(_, v: T#Value, _) ⇒ value = plus(value, v)
   }
 
   def setIt: Receive = {
-    case SetValue(_, v: T#Value, _) ⇒ _value = v
+    case SetValue(_, v: T#Value, _) ⇒ value = v
   }
 
   def storeAndResetIt: Receive = {
     case Flush(_, t) ⇒
-      store(t, _value)
+      store(t, value)
       publish
       reset
 
@@ -129,7 +136,7 @@ trait ValueAggregator[T <: Metric] {
 
   def storeIt: Receive = {
     case Flush(_, t) ⇒
-      store(t, _value)
+      store(t, value)
       publish
 
   }
@@ -141,7 +148,12 @@ trait ValueAggregator[T <: Metric] {
     case m: StopPublish ⇒ pub = None
   }
 
-  def publish = pub.foreach(_ ! MetricValueAt[T](metric, System.currentTimeMillis(), _value))
+  def publish: Unit = if (!published)
+    pub.foreach {
+      ref =>
+        ref ! MetricValueAt[T](metric, System.currentTimeMillis(), value)
+        published = true
+    }
 }
 
 class CounterAggregatorWorkerActor(val metric: LongCounter) extends Actor with ValueAggregator[LongCounter] with MemoryMetricStore[LongCounter] {
