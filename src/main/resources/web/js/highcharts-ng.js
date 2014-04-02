@@ -170,7 +170,7 @@ angular.module('highcharts-ng', [])
 
         };
 
-        var initialiseChart = function (scope, element, config) {
+        var initialiseChart = function (scope, element, config, bucket) {
             config = config || {};
             var mergedOptions = getMergedOptions(scope, element, config);
             var chart = config.useHighStocks ? new Highcharts.StockChart(mergedOptions) : new Highcharts.Chart(mergedOptions);
@@ -186,7 +186,7 @@ angular.module('highcharts-ng', [])
             chart.redraw();
 
             if (config.initFunction) {
-                config.initFunction(chart)
+                config.initFunction(chart,bucket)
             }
             return chart;
         };
@@ -197,7 +197,8 @@ angular.module('highcharts-ng', [])
             replace: true,
             template: '<div></div>',
             scope: {
-                config: '='
+                config: '=',
+                bucket: '='
             },
             link: function (scope, element, attrs) {
 
@@ -205,7 +206,7 @@ angular.module('highcharts-ng', [])
 
                 function initChart() {
                     if (chart) chart.destroy();
-                    chart = initialiseChart(scope, element, scope.config);
+                    chart = initialiseChart(scope, element, scope.config, scope.bucket);
                 }
 
                 initChart();

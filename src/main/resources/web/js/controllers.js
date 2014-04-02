@@ -38,20 +38,20 @@ myAppControlers.controller('MyCtrl1', ['$scope', 'Bucket', function ($scope, Buc
         },
         loading: false,
 
-        initFunction : function (chart) {
-        var series = chart.series[0];
-        var addMsg = function (msg) {
-            var items = JSON.parse(msg.data),
-            shift = series.data.length > 20
-            series.addPoint([items.ts, items.value], true, shift);
+        initFunction: function (chart, bucket) {
+            var series = chart.series[0];
+            var addMsg = function (msg) {
+                var items = JSON.parse(msg.data),
+                    shift = series.data.length > 20
+                series.addPoint([items.ts, items.value], true, shift);
 
-        };
-        var feed = new EventSource("/values/test.bucket.0");
-        feed.addEventListener("message", addMsg, false);
+            };
+            var feed = new EventSource("/values/" + bucket.name);
+            feed.addEventListener("message", addMsg, false);
 
-    }
+        }
 
-};
+    };
 
 
     $scope.addMsg = function (msg) {

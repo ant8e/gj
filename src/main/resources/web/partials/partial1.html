@@ -2,13 +2,11 @@
     <h1 class="page-header">Dashboard</h1>
     <select ng-model="bucket" ng-options="b.name for b in buckets"></select>
 
-    <div ng-repeat="b in buckets"> {{b.name}}</div>
 
     <div class="row placeholders">
-        <div class="col-xs-9 col-sm-6 placeholder">
-            <highchart id="chart1" config="chartConfig"></highchart>
-            <h4>Label</h4>
-            <span class="text-muted">Something else</span>
+        <div ng-repeat="b in buckets" class="col-xs-9 col-sm-6 placeholder">
+            <highchart id="chart1" config="chartConfig" bucket="b"></highchart>
+            <h4> {{b.name}}</h4>
         </div>
 
     </div>
