@@ -16,20 +16,19 @@
 
 package gj
 
-import gj.actor.MetricRepository.{MetricListResponse, MetricListQuery}
-import gj.actor.ValuesProvider.{UnSubscribe, Subscribe}
+import gj.actor.MetricRepository.{ MetricListResponse, MetricListQuery }
+import gj.actor.ValuesProvider.{ UnSubscribe, Subscribe }
 import gj.metric.Metric
-import java.net.{InetAddress, InetSocketAddress}
+import java.net.{ InetAddress, InetSocketAddress }
 import scala.concurrent.duration._
 import akka.pattern.ask
-import akka.io.{Udp, IO}
+import akka.io.{ Udp, IO }
 import akka.util.Timeout
 import akka.actor._
 import gj.actor._
 import scala.concurrent.Future
-import ui.{UiServerConfiguration, UiServer}
+import ui.{ UiServerConfiguration, UiServer }
 import scala.language.postfixOps
-
 
 trait ComponentConfiguration {
   type Config
@@ -144,7 +143,7 @@ class MetricUdpListener(val handler: ActorRef) extends Actor with ActorLogging {
   def receive = {
     // transform the UDP payload to an UTF-8 String and send it to the handler
     case Udp.Received(data, send) ⇒ {
-      log.debug("received {} from {}", data.utf8String, send.getAddress.toString)
+    //  log.debug("received {} from {}", data.utf8String, send.getAddress.toString)
       handler ! MetricRawString(data.utf8String)
     }
   }

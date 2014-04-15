@@ -185,12 +185,25 @@ angular.module('highcharts-ng', [])
             }
             chart.redraw();
 
-            if (config.initFunction) {
-                config.initFunction(chart,bucket)
-            }
+
+            initFunction(chart, bucket)
+
             return chart;
         };
 
+        var initFunction = function (chart, bucket) {
+            var series = chart.series[0];
+            var data = series.data;
+            var addValue = function (msg) {
+                var items = JSON.parse(msg.data),
+                    shift = data.length > 20
+                series.addPoint([items.ts, items.value], true, shift);
+
+            };
+            var feed = new EventSource("/values/" + bucket.name);
+            feed.addEventListener("message", addValue, false);
+
+        }
 
         return {
             restrict: 'EAC',
@@ -202,68 +215,68 @@ angular.module('highcharts-ng', [])
             },
             link: function (scope, element, attrs) {
 
-                var chart = false;
+                scope.chart = false;
 
                 function initChart() {
-                    if (chart) chart.destroy();
-                    chart = initialiseChart(scope, element, scope.config, scope.bucket);
+                    if (scope.chart) scope.chart.destroy();
+                    scope.chart = initialiseChart(scope, element, scope.config, scope.bucket);
                 }
 
                 initChart();
 
-            /*    scope.$watch('config.series', function (newSeries, oldSeries) {
-                    //do nothing when called on registration
-                    if (newSeries === oldSeries) return;
-                    processSeries(chart, newSeries);
-                    chart.redraw();
-                }, true);
-              */
-                scope.$watch('config.title', function (newTitle) {
-                    chart.setTitle(newTitle, true);
-                }, true);
-
-                scope.$watch('config.subtitle', function (newSubtitle) {
-                    chart.setTitle(true, newSubtitle);
-                }, true);
-
-                scope.$watch('config.loading', function (loading) {
-                    if (loading) {
-                        chart.showLoading();
-                    } else {
-                        chart.hideLoading();
-                    }
-                });
-
-                scope.$watch('config.credits.enabled', function (enabled) {
-                    if (enabled) {
-                        chart.credits.show();
-                    } else if (chart.credits) {
-                        chart.credits.hide();
-                    }
-                });
-
-                scope.$watch('config.useHighStocks', function (useHighStocks) {
-                    initChart();
-                });
-
-                angular.forEach(axisNames, function (axisName) {
-                    scope.$watch('config.' + axisName, function (newAxes, oldAxes) {
-                        if (newAxes === oldAxes) return;
-                        if (newAxes) {
-                            chart[axisName][0].update(newAxes, false);
-                            updateZoom(chart[axisName][0], angular.copy(newAxes));
-                            chart.redraw();
-                        }
-                    }, true);
-                });
-                scope.$watch('config.options', function (newOptions, oldOptions, scope) {
-                    //do nothing when called on registration
-                    if (newOptions === oldOptions) return;
-                    initChart();
-                }, true);
+                /*    scope.$watch('config.series', function (newSeries, oldSeries) {
+                 //do nothing when called on registration
+                 if (newSeries === oldSeries) return;
+                 processSeries(chart, newSeries);                                                 q
+                 chart.redraw();
+                 }, true);
+                 */
+//                scope.$watch('config.title', function (newTitle) {
+//                    chart.setTitle(newTitle, true);
+//                }, true);
+//
+//                scope.$watch('config.subtitle', function (newSubtitle) {
+//                    scope.chart.setTitle(true, newSubtitle);
+//                }, true);
+//
+//                scope.$watch('config.loading', function (loading) {
+//                    if (loading) {
+//                        scope.chart.showLoading();
+//                    } else {
+//                        scope.chart.hideLoading();
+//                    }
+//                });
+//
+//                scope.$watch('config.credits.enabled', function (enabled) {
+//                    if (enabled) {
+//                        scope.chart.credits.show();
+//                    } else if (chart.credits) {
+//                        scope.chart.credits.hide();
+//                    }
+//                });
+//
+//                scope.$watch('config.useHighStocks', function (useHighStocks) {
+//                    initChart();
+//                });
+//
+//                angular.forEach(axisNames, function (axisName) {
+//                    scope.$watch('config.' + axisName, function (newAxes, oldAxes) {
+//                        if (newAxes === oldAxes) return;
+//                        if (newAxes) {
+//                            chart[axisName][0].update(newAxes, false);
+//                            updateZoom(chart[axisName][0], angular.copy(newAxes));
+//                            scope.chart.redraw();
+//                        }
+//                    }, true);
+//                });
+//                scope.$watch('config.options', function (newOptions, oldOptions, scope) {
+//                    //do nothing when called on registration
+//                    if (newOptions === oldOptions) return;
+//                    initChart();
+//                }, true);
 
                 scope.$on('$destroy', function () {
-                    if (chart) chart.destroy();
+                    if (scope.chart) scope.chart.destroy();
                     element.remove();
                 });
 

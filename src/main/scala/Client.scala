@@ -16,8 +16,8 @@
 
 import java.net.InetSocketAddress
 import scala.concurrent.duration._
-import akka.io.{Udp, IO}
-import akka.util.{ByteString, Timeout}
+import akka.io.{ Udp, IO }
+import akka.util.{ ByteString, Timeout }
 import akka.actor._
 import akka.io.Udp.SimpleSenderReady
 import scala.util.Random
@@ -49,7 +49,7 @@ object Client extends App {
     }
   }
 
-  for (i <- 0 until 10)
+  for (i ← 0 until 10)
     system.actorOf(Props(classOf[MySender], s"test.bucket.$i")) ! "Go"
 
 }
