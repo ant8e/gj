@@ -20,6 +20,9 @@ import java.nio.ByteBuffer
 
 
 object `package` {
+  /**
+   * A Metric is a combination of a identifier, a style, a and valuetype
+   */
   type Metric = MetricId with MetricType with MetricStyle
 }
 
@@ -84,6 +87,13 @@ trait Distinct extends MetricStyle {
   val styleTag = "D"
 }
 
+trait MetricId  {
+  /**
+   * the bucket
+   */
+  def bucket: Bucket
+}
+
 trait MetricType {
   type Value
 
@@ -91,13 +101,6 @@ trait MetricType {
 
   def valueByteDecoder(x: Array[Byte]): Value
 
-}
-
-trait MetricId  {
-  /**
-   * the bucket
-   */
-  def bucket: Bucket
 }
 
 trait LongMetricType extends MetricType {
@@ -129,7 +132,7 @@ sealed case class MetricValueAt[M <: Metric](metric: M, timestamp: Long, value: 
 /**
  * Operations on Metrics
  */
-sealed abstract class MetricOperation[+T <: Metric] {
+sealed trait MetricOperation[T <: Metric] {
   val metric: T
   val ts: Long
 }
@@ -148,7 +151,7 @@ case class Increment[T <: Metric](metric: T, increment: T#Value, ts: Long) exten
  * @param metric
  * @param value
  */
-case class SetValue[+T <: Metric](metric: T, value: T#Value, ts: Long) extends MetricOperation[T]
+case class SetValue[T <: Metric](metric: T, value: T#Value, ts: Long) extends MetricOperation[T]
 
 /**
  * Flush the current Metric value :
@@ -158,4 +161,4 @@ case class SetValue[+T <: Metric](metric: T, value: T#Value, ts: Long) extends M
  * @param metric
  * @param millis timestamp of the flush op
  */
-case class Flush[+T <: Metric](metric: T, ts: Long) extends MetricOperation[T]
+case class Flush[T <: Metric](metric: T, ts: Long) extends MetricOperation[T]
