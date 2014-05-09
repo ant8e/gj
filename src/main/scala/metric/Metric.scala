@@ -17,6 +17,8 @@
 package gj.metric
 
 import java.nio.ByteBuffer
+import scala.reflect.ClassTag
+import java.lang.reflect.Constructor
 
 
 object `package` {
@@ -142,9 +144,7 @@ sealed trait MetricOperation[T <: Metric] {
  * @param metric
  * @param increment
  */
-case class Increment[T <: Metric](metric: T, increment: T#Value, ts: Long) extends MetricOperation[T] {
-  //  def   apply[T <: Metric : ClassTag] (b:Bucket, increment:T#Value) = new Increment[T](implicitly[ClassTag[T]].runtimeClass.getConstructor(classOf[Bucket]).newInstance(b), increment )
-}
+case class Increment[T <: Metric](metric: T, increment: T#Value, ts: Long) extends MetricOperation[T]
 
 /**
  * SetValue operation sets the value of a Metric

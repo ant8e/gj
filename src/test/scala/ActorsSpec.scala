@@ -18,11 +18,11 @@
 package gj
 
 import gj.actor._
-import ValuesProvider.{ UnSubscribe, Subscribe }
+import ValuesProvider.{UnSubscribe, Subscribe}
 import akka.actor.ActorSystem
 import akka.util.Timeout
 import org.scalatest.FunSpec
-import akka.testkit.{ ImplicitSender, TestKit, TestActorRef }
+import akka.testkit.{ImplicitSender, TestKit, TestActorRef}
 import akka.pattern.ask
 import org.scalatest.matchers.MustMatchers
 import scala.concurrent.duration._
@@ -33,7 +33,7 @@ import RawMetricHandler._
 import metric._
 import scala.util.Success
 import ui.ValueStreamBridge
-import ui.ServerSideEventsDirectives.{ Message, RegisterClosedHandler }
+import ui.ServerSideEventsDirectives.{Message, RegisterClosedHandler}
 
 class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec with ImplicitSender with MustMatchers {
   def this() = this(ActorSystem("ActorsSpec"))
@@ -83,7 +83,7 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
 
     it("should decode Gauge updating metrics (dec)") {
       ref ! SingleMetricRawString("test.bucket:-100|g", 0)
-      expectMsg(10 millis, new Increment[LongGauge](gauge, -100, 0))
+      expectMsg(10 millis, Increment[LongGauge](gauge, -100, 0))
     }
 
     it("should decode Gauge updating metrics (inc)") {
@@ -107,13 +107,13 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
     }
     it("should increment the gauge with a Increment") {
       val ref = TestActorRef(new GaugeAggregatorWorkerActor(gauge))
-      ref ! new Increment[LongGauge](gauge, 1, 0)
+      ref ! Increment[LongGauge](gauge, 1, 0)
       ref.underlyingActor.value must be(1)
     }
 
     it("should not reset the value on flush") {
       val ref = TestActorRef(new GaugeAggregatorWorkerActor(gauge))
-      ref ! new Increment[LongGauge](gauge, 1, 0)
+      ref ! Increment[LongGauge](gauge, 1, 0)
       ref.underlyingActor.value must be(1)
       ref ! flushOp
       ref.underlyingActor.value must be(1)
@@ -279,7 +279,7 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
       val vba = TestActorRef(new ValueStreamBridge(self, counter))
       expectMsgClass(classOf[RegisterClosedHandler])
       vba ! MetricValueAt[counter.type](counter, 0, 1)
-      expectMsg(Message("""{"value":1,"ts":0}"""))
+      expectMsg(Message( """{"value":1,"ts":0}"""))
     }
   }
 }
