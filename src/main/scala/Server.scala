@@ -18,7 +18,7 @@ package gj
 
 import gj.actor.MetricRepository.{MetricListResponse, MetricListQuery}
 import gj.actor.ValuesProvider.{UnSubscribe, Subscribe}
-import gj.metric.Metric
+import gj.metric._
 import java.net.{InetAddress, InetSocketAddress}
 import scala.concurrent.duration._
 import akka.pattern.ask
@@ -29,7 +29,6 @@ import gj.actor._
 import scala.concurrent.Future
 import ui.{UiServerConfiguration, UiServer}
 import scala.language.postfixOps
-
 
 trait ComponentConfiguration {
   type Config

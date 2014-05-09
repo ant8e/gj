@@ -18,6 +18,12 @@ package gj.metric
 
 import java.nio.ByteBuffer
 
+
+object `package` {
+  type Metric = MetricId with MetricType with MetricStyle
+}
+
+
 /**
  * A Metric bucket
  */
@@ -87,7 +93,7 @@ trait MetricType {
 
 }
 
-trait Metric extends MetricStyle with MetricType {
+trait MetricId  {
   /**
    * the bucket
    */
@@ -103,13 +109,13 @@ trait LongMetricType extends MetricType {
 
 }
 
-sealed case class LongGauge(bucket: Bucket) extends Metric with Gauge with LongMetricType
+sealed case class LongGauge(bucket: Bucket) extends MetricId with Gauge with LongMetricType
 
-sealed case class LongCounter(bucket: Bucket) extends Metric with Counter with LongMetricType
+sealed case class LongCounter(bucket: Bucket) extends MetricId with Counter with LongMetricType
 
-sealed case class LongTiming(bucket: Bucket) extends Metric with Timing with LongMetricType
+sealed case class LongTiming(bucket: Bucket) extends MetricId with Timing with LongMetricType
 
-sealed case class LongDistinct(bucket: Bucket) extends Metric with Distinct with LongMetricType
+sealed case class LongDistinct(bucket: Bucket) extends MetricId with Distinct with LongMetricType
 
 /**
  * A Metric value as some point in time

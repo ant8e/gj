@@ -17,9 +17,10 @@
 package gj.actor
 
 import akka.event.{ LookupClassification, ActorEventBus }
+import gj.metric._
 import ValuesProvider.{ UnSubscribe, Subscribe }
 import akka.actor.{ Props, ActorRef, Actor }
-import gj.metric.{ MetricValueAt, Metric }
+import gj.metric.{ MetricValueAt, MetricId }
 
 /**
  * Actor that provides the values stream
@@ -48,7 +49,7 @@ class ValuesProvider(val metricActor: ActorRef) extends Actor with ValuesEventBu
 
 trait ValuesEventBus extends ActorEventBus with LookupClassification {
   type Event = MetricValueAt[_ <: Metric]
-  type Classifier = Metric
+  type Classifier = MetricId
 
   protected def classify(event: Event): Classifier = event.metric
 

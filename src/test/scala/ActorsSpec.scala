@@ -213,7 +213,7 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
       val future = ref ? MetricListQuery
       val Success(v: MetricListResponse) = future.value.get
       v.metrics must have size (2)
-      v.metrics must contain(gauge.asInstanceOf[Metric])
+      v.metrics must contain(gauge.asInstanceOf[MetricId])
     }
 
     it("should handle a start publish event") {

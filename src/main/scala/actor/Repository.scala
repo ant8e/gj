@@ -64,7 +64,7 @@ class MetricRepository extends Actor with ActorLogging {
    * @param s the metric style
    * @return the corresponding actor
    */
-  private def buildMetricActor(s: MetricStyle): Props = s match {
+  private def buildMetricActor(s: Metric): Props = s match {
     case _: Counter ⇒ Props(classOf[CounterAggregatorWorkerActor], s)
     case _: Timing ⇒ Props(classOf[TimingAggregatorWorkerActor], s)
     case _: Gauge ⇒ Props(classOf[GaugeAggregatorWorkerActor], s)

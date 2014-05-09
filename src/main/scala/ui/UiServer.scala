@@ -19,7 +19,7 @@
 package ui
 
 import akka.actor._
-import gj.metric.{MetricValueAt, Metric}
+import gj.metric.{MetricValueAt, _}
 import gj.{ComponentConfiguration, MetricProvider, ActorSystemProvider}
 import spray.routing._
 import akka.actor.{ActorRefFactory, ActorRef, Actor, Props}

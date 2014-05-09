@@ -16,7 +16,7 @@
 
 package storage
 
-import gj.metric.Metric
+import gj.metric._
 import com.github.bytecask.Bytecask
 
 /**
