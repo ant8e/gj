@@ -218,7 +218,7 @@ class ValueStreamBridge(channel: ActorRef, metric: Metric) extends Actor {
     case RegStopHandler(h) ⇒ stopHandler = h
   }
 
-  def toJson(mv: MetricValueAt[metric.type]) = s"""{"value":${mv.value},"ts":${mv.timestamp}}"""
+  def toJson(mv: MetricValueAt[_]) = s"""{"value":${mv.value},"ts":${mv.timestamp}}"""
 }
 
 object ValueStreamBridge {

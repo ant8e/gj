@@ -159,6 +159,6 @@ case class SetValue[T <: Metric](metric: T, value: T#Value, ts: Long) extends Me
  * and reset the value to the default according to the metric style
  *
  * @param metric
- * @param millis timestamp of the flush op
+ * @param ts timestamp of the flush op
  */
 case class Flush[T <: Metric](metric: T, ts: Long) extends MetricOperation[T]
