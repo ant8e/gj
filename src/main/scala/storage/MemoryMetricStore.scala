@@ -16,7 +16,7 @@
 
 package storage
 
-import gj.metric.Metric
+import gj.metric._
 
 /**
  * In memory metric store

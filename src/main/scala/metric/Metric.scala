@@ -17,6 +17,17 @@
 package gj.metric
 
 import java.nio.ByteBuffer
+import scala.reflect.ClassTag
+import java.lang.reflect.Constructor
+
+
+object `package` {
+  /**
+   * A Metric is a combination of a identifier, a style, a and valuetype
+   */
+  type Metric = MetricId with MetricType with MetricStyle
+}
+
 
 /**
  * A Metric bucket
@@ -78,6 +89,13 @@ trait Distinct extends MetricStyle {
   val styleTag = "D"
 }
 
+trait MetricId  {
+  /**
+   * the bucket
+   */
+  def bucket: Bucket
+}
+
 trait MetricType {
   type Value
 
@@ -85,13 +103,6 @@ trait MetricType {
 
   def valueByteDecoder(x: Array[Byte]): Value
 
-}
-
-trait Metric extends MetricStyle with MetricType {
-  /**
-   * the bucket
-   */
-  def bucket: Bucket
 }
 
 trait LongMetricType extends MetricType {
@@ -103,13 +114,13 @@ trait LongMetricType extends MetricType {
 
 }
 
-sealed case class LongGauge(bucket: Bucket) extends Metric with Gauge with LongMetricType
+sealed case class LongGauge(bucket: Bucket) extends MetricId with Gauge with LongMetricType
 
-sealed case class LongCounter(bucket: Bucket) extends Metric with Counter with LongMetricType
+sealed case class LongCounter(bucket: Bucket) extends MetricId with Counter with LongMetricType
 
-sealed case class LongTiming(bucket: Bucket) extends Metric with Timing with LongMetricType
+sealed case class LongTiming(bucket: Bucket) extends MetricId with Timing with LongMetricType
 
-sealed case class LongDistinct(bucket: Bucket) extends Metric with Distinct with LongMetricType
+sealed case class LongDistinct(bucket: Bucket) extends MetricId with Distinct with LongMetricType
 
 /**
  * A Metric value as some point in time
@@ -123,7 +134,7 @@ sealed case class MetricValueAt[M <: Metric](metric: M, timestamp: Long, value: 
 /**
  * Operations on Metrics
  */
-sealed abstract class MetricOperation[+T <: Metric] {
+sealed trait MetricOperation[T <: Metric] {
   val metric: T
   val ts: Long
 }
@@ -133,16 +144,14 @@ sealed abstract class MetricOperation[+T <: Metric] {
  * @param metric
  * @param increment
  */
-case class Increment[T <: Metric](metric: T, increment: T#Value, ts: Long) extends MetricOperation[T] {
-  //  def   apply[T <: Metric : ClassTag] (b:Bucket, increment:T#Value) = new Increment[T](implicitly[ClassTag[T]].runtimeClass.getConstructor(classOf[Bucket]).newInstance(b), increment )
-}
+case class Increment[T <: Metric](metric: T, increment: T#Value, ts: Long) extends MetricOperation[T]
 
 /**
  * SetValue operation sets the value of a Metric
  * @param metric
  * @param value
  */
-case class SetValue[+T <: Metric](metric: T, value: T#Value, ts: Long) extends MetricOperation[T]
+case class SetValue[T <: Metric](metric: T, value: T#Value, ts: Long) extends MetricOperation[T]
 
 /**
  * Flush the current Metric value :
@@ -152,4 +161,4 @@ case class SetValue[+T <: Metric](metric: T, value: T#Value, ts: Long) extends M
  * @param metric
  * @param millis timestamp of the flush op
  */
-case class Flush[+T <: Metric](metric: T, ts: Long) extends MetricOperation[T]
+case class Flush[T <: Metric](metric: T, ts: Long) extends MetricOperation[T]

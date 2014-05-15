@@ -16,7 +16,7 @@
 package gj
 
 import akka.actor.{ ActorSystem, ActorRef }
-import gj.metric.{ SimpleBucket, LongCounter, Metric }
+import gj.metric.{ SimpleBucket, LongCounter, _ }
 import org.scalatest.FunSpec
 import org.scalatest.matchers.MustMatchers
 import scala.concurrent.Future

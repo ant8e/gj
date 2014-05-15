@@ -16,7 +16,7 @@
 
 package storage
 
-import gj.metric.Metric
+import gj.metric._
 
 /**
  * Stores a metric along with it's timestamp
