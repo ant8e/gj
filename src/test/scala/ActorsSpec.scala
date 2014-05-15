@@ -279,7 +279,10 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
       val vba = TestActorRef(new ValueStreamBridge(self, counter))
       expectMsgClass(classOf[RegisterClosedHandler])
       vba ! MetricValueAt[counter.type](counter, 0, 1)
-      expectMsg(Message( """{"value":1,"ts":0}"""))
+      expectMsg(Message( """{"metric":"test.bucket","value":1,"ts":0}"""))
+    }
+    it("should stop correctly") {
+      pending
     }
   }
 }

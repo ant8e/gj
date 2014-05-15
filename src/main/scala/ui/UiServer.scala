@@ -31,7 +31,7 @@ import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{Future, ExecutionContext}
 import scala.Some
 import ui.ValueStreamBridge.RegStopHandler
 
@@ -74,7 +74,7 @@ trait UiServer extends ComponentConfiguration {
   self: ActorSystemProvider with MetricProvider ⇒
 
   type Config <: UiServerConfiguration
-   val serviceName = "gj-ui-service"
+  val serviceName = "gj-ui-service"
 
   //Getting the actor system from the mixed ActorSystemProvider trait and making it implicit
   private implicit val system: ActorSystem = actorSystem
@@ -149,31 +149,47 @@ trait UIService extends HttpService with SprayJsonSupport {
   /**
    * values route
    */
-  def valuesRoute = path("values" / PathMatchers.RestPath) {
+  def valuesRoute = path("values" / Segments) {
     b ⇒
       dynamic {
         implicit val ex = actorRefFactory.dispatcher
-        onSuccess(metricProvider findMetric (b.toString())) {
-          _ match {
-            case Some(m) ⇒ metricValueStream(m)
-            case _ ⇒ complete(StatusCodes.NotFound)
-          }
+        onSuccess(listMetric(b)) {
+          lm =>
+            if (lm.isEmpty)
+              complete(StatusCodes.NotFound)
+            else metricValueStream(lm: _*)
         }
       }
   }
 
+  def listMetric(names: List[String])(implicit ec: ExecutionContext): Future[List[Metric]] = {
+    val l: List[Future[Option[Metric]]] = names map {
+      metricProvider findMetric _
+    }
+
+    Future.fold(l)(List[Metric]())((acc, f) => f match {
+      case Some(v) => v :: acc
+      case _ => acc
+    })
+  }
+
+
   /**
    * Build a route that stream the values of the specified metric
-   * @param m the metric
+   * @param metrics the metrics
    * @return A sse route, streaming an event for each value
    */
-  def metricValueStream(m: Metric)(implicit actorRefFactory: ActorRefFactory): Route = {
+  def metricValueStream(metrics: Metric*)(implicit actorRefFactory: ActorRefFactory): Route = {
+
     import ServerSideEventsDirectives.sse
+
     sse {
       (sseChannel: ActorRef, lastEvent: Option[String]) ⇒ {
-        val valueActor = actorRefFactory.actorOf(Props(new ValueStreamBridge(sseChannel, m)))
-        metricProvider subscribe(m, valueActor)
-        valueActor ! ValueStreamBridge.RegStopHandler(() ⇒ metricProvider unSubscribe(m, valueActor))
+        for (m <- metrics) {
+          val valueActor = actorRefFactory.actorOf(Props(new ValueStreamBridge(sseChannel, m)))
+          metricProvider subscribe(m, valueActor)
+          valueActor ! ValueStreamBridge.RegStopHandler(() ⇒ metricProvider unSubscribe(m, valueActor))
+        }
       }
     }
   }
@@ -200,28 +216,34 @@ trait UIService extends HttpService with SprayJsonSupport {
 /**
  * Subscribe to a Metric value stream and push every value to a SSE channel as a JSON representation
  *
- * @param channel  the
+ * @param sseChannel  the
  * @param metric
  */
-class ValueStreamBridge(channel: ActorRef, metric: Metric) extends Actor {
+class ValueStreamBridge(sseChannel: ActorRef, metric: Metric) extends Actor {
 
   import ServerSideEventsDirectives.{Message, RegisterClosedHandler}
+  import ValueStreamBridge.Stop
+
 
   var stopHandler: () ⇒ Unit = () ⇒ {}
-  channel ! RegisterClosedHandler(() ⇒ {
-    stopHandler()
+
+  sseChannel ! RegisterClosedHandler(() ⇒ {
+    self ! Stop
     context.stop(self)
   })
 
   override def receive: Actor.Receive = {
-    case v: MetricValueAt[_] ⇒ channel ! Message(toJson(v))
+    case v: MetricValueAt[_] ⇒ sseChannel ! Message(toJson(v))
     case RegStopHandler(h) ⇒ stopHandler = h
+    case Stop => stopHandler
   }
 
-  def toJson(mv: MetricValueAt[_]) = s"""{"value":${mv.value},"ts":${mv.timestamp}}"""
+  def toJson(mv: MetricValueAt[_ <: Metric]) = s"""{"metric":"${mv.metric.bucket.name}","value":${mv.value},"ts":${mv.timestamp}}"""
 }
 
 object ValueStreamBridge {
+
+  object Stop
 
   case class RegStopHandler(hander: () ⇒ Unit)
 
