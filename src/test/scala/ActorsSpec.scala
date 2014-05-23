@@ -22,7 +22,7 @@ import ValuesProvider.{UnSubscribe, Subscribe}
 import akka.actor.ActorSystem
 import akka.util.Timeout
 import org.scalatest.FunSpec
-import akka.testkit.{ImplicitSender, TestKit, TestActorRef}
+import akka.testkit.{TestProbe, ImplicitSender, TestKit, TestActorRef}
 import akka.pattern.ask
 import org.scalatest.matchers.MustMatchers
 import scala.concurrent.duration._
@@ -34,6 +34,7 @@ import metric._
 import scala.util.Success
 import ui.ValueStreamBridge
 import ui.ServerSideEventsDirectives.{Message, RegisterClosedHandler}
+import ui.ValueStreamBridge.RegisterStopHandler
 
 class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec with ImplicitSender with MustMatchers {
   def this() = this(ActorSystem("ActorsSpec"))
@@ -282,7 +283,16 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
       expectMsg(Message( """{"metric":"test.bucket","value":1,"ts":0}"""))
     }
     it("should stop correctly") {
-      pending
+      val vba = TestActorRef(new ValueStreamBridge(self, counter))
+      val probe = TestProbe()
+      probe watch vba
+      val rch = expectMsgClass(classOf[RegisterClosedHandler])
+      vba ! RegisterStopHandler(() => {
+        self ! "Yeah"
+      })
+      rch.handler()
+      expectMsg("Yeah")
+      probe.expectTerminated(vba)
     }
   }
 }

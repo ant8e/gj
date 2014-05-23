@@ -33,7 +33,7 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 import scala.concurrent.{Future, ExecutionContext}
 import scala.Some
-import ui.ValueStreamBridge.RegStopHandler
+import ui.ValueStreamBridge.RegisterStopHandler
 
 /**
  * UI Server configuration
@@ -188,7 +188,7 @@ trait UIService extends HttpService with SprayJsonSupport {
         for (m <- metrics) {
           val valueActor = actorRefFactory.actorOf(Props(new ValueStreamBridge(sseChannel, m)))
           metricProvider subscribe(m, valueActor)
-          valueActor ! ValueStreamBridge.RegStopHandler(() ⇒ metricProvider unSubscribe(m, valueActor))
+          valueActor ! ValueStreamBridge.RegisterStopHandler(() ⇒ metricProvider unSubscribe(m, valueActor))
         }
       }
     }
@@ -224,8 +224,7 @@ class ValueStreamBridge(sseChannel: ActorRef, metric: Metric) extends Actor {
   import ServerSideEventsDirectives.{Message, RegisterClosedHandler}
   import ValueStreamBridge.Stop
 
-
-  var stopHandler: () ⇒ Unit = () ⇒ {}
+ private  var stopHandler: List[() ⇒ Unit] =List()
 
   sseChannel ! RegisterClosedHandler(() ⇒ {
     self ! Stop
@@ -234,8 +233,8 @@ class ValueStreamBridge(sseChannel: ActorRef, metric: Metric) extends Actor {
 
   override def receive: Actor.Receive = {
     case v: MetricValueAt[_] ⇒ sseChannel ! Message(toJson(v))
-    case RegStopHandler(h) ⇒ stopHandler = h
-    case Stop => stopHandler
+    case RegisterStopHandler(h) ⇒ stopHandler = stopHandler :+ h
+    case Stop => stopHandler foreach( _())
   }
 
   def toJson(mv: MetricValueAt[_ <: Metric]) = s"""{"metric":"${mv.metric.bucket.name}","value":${mv.value},"ts":${mv.timestamp}}"""
@@ -245,6 +244,6 @@ object ValueStreamBridge {
 
   object Stop
 
-  case class RegStopHandler(hander: () ⇒ Unit)
+  case class RegisterStopHandler(hander: () ⇒ Unit)
 
 }
