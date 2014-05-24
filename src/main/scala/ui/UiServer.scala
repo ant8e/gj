@@ -33,7 +33,7 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 import scala.concurrent.{Future, ExecutionContext}
 import scala.Some
-import ui.ValueStreamBridge.RegisterStopHandler
+import ui.ValueStreamBridge.{CallBack, RegisterStopHandler}
 
 /**
  * UI Server configuration
@@ -224,26 +224,29 @@ class ValueStreamBridge(sseChannel: ActorRef, metric: Metric) extends Actor {
   import ServerSideEventsDirectives.{Message, RegisterClosedHandler}
   import ValueStreamBridge.Stop
 
- private  var stopHandler: List[() ⇒ Unit] =List()
+  private var stopHandler: List[CallBack] = List()
 
-  sseChannel ! RegisterClosedHandler(() ⇒ {
+  private def handler() = {
     self ! Stop
     context.stop(self)
-  })
+  }
+
+  sseChannel ! RegisterClosedHandler(handler)
 
   override def receive: Actor.Receive = {
     case v: MetricValueAt[_] ⇒ sseChannel ! Message(toJson(v))
     case RegisterStopHandler(h) ⇒ stopHandler = stopHandler :+ h
-    case Stop => stopHandler foreach( _())
+    case Stop => stopHandler foreach (h => h())
   }
 
   def toJson(mv: MetricValueAt[_ <: Metric]) = s"""{"metric":"${mv.metric.bucket.name}","value":${mv.value},"ts":${mv.timestamp}}"""
 }
 
 object ValueStreamBridge {
+  type CallBack = () ⇒ Unit
 
   object Stop
 
-  case class RegisterStopHandler(hander: () ⇒ Unit)
+  case class RegisterStopHandler(handler: CallBack)
 
 }
