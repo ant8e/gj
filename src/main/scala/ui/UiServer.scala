@@ -131,7 +131,6 @@ trait UIService extends HttpService with SprayJsonSupport {
   }
 
   import MyJsonProtocol._
-
   /**
    *
    */
@@ -149,15 +148,17 @@ trait UIService extends HttpService with SprayJsonSupport {
   /**
    * values route
    */
-  def valuesRoute = path("values" / Segments) {
+  def valuesRoute = pathPrefix("values" / Segments) {
     b ⇒
-      dynamic {
-        implicit val ex = actorRefFactory.dispatcher
-        onSuccess(listMetric(b)) {
-          lm =>
-            if (lm.isEmpty)
-              complete(StatusCodes.NotFound)
-            else metricValueStream(lm: _*)
+      pathEndOrSingleSlash {
+        dynamic {
+          implicit val ex = actorRefFactory.dispatcher
+          onSuccess(listMetric(b)) {
+            lm =>
+              if (lm.isEmpty)
+                complete(StatusCodes.NotFound)
+              else metricValueStream(lm: _*)
+          }
         }
       }
   }

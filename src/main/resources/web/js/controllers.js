@@ -4,12 +4,12 @@
 
 var myAppControlers = angular.module('myApp.controllers', []);
 
-myAppControlers.controller('MyCtrl1', ['$scope', 'Bucket', function ($scope, Bucket) {
+myAppControlers.controller('MyCtrl1', ['$scope', 'Bucket', 'metricSource', function ($scope, Bucket, metricSource) {
 
     $scope.values = [];
 
     $scope.chartSeries = [
-        {"name": "Plot", "data": [1, 2, 4, 7, 3]}
+        {"name": "Plot", "data": []}
 
     ];
 
@@ -36,41 +36,15 @@ myAppControlers.controller('MyCtrl1', ['$scope', 'Bucket', function ($scope, Buc
         credits: {
             enabled: true
         },
-        loading: false,
-
-        initFunction: function (chart, bucket) {
-            var series = chart.series[0];
-            var addMsg = function (msg) {
-                var items = JSON.parse(msg.data),
-                    shift = series.data.length > 20
-                series.addPoint([items.ts, items.value], true, shift);
-
-            };
-            var feed = new EventSource("/values/" + bucket.name);
-            feed.addEventListener("message", addMsg, false);
-
-        }
-
-    };
+        loading: false};
 
 
-    $scope.addMsg = function (msg) {
-        $scope.$apply(function () {
-            var items = JSON.parse(msg.data);
-            $scope.values.push(items);
-            $scope.chartConfig.series[0].data.push(JSON.parse(msg.data).value)
-            //  $scope.chart1.series[0].addPoint([items.ts, items.value], true, true);
-
-        });
-    };
-
-    /** start listening on messages from selected room */
-    /*  $scope.listen = function () {
-     $scope.chatFeed = new EventSource("/values/test.bucket");
-     $scope.chatFeed.addEventListener("message", $scope.addMsg, false);
-     };
-     */
-    //$scope.listen();
+    $scope.subscribe = function (b) {
+        metricSource.subscribe($scope, b)
+    }
+    $scope.unsubscribe = function (b) {
+        metricSource.unsubscribe(b)
+    }
 
     $scope.buckets = Bucket.query();
 

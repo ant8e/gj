@@ -170,8 +170,8 @@ angular.module('highcharts-ng', [])
 
         };
 
-        var initialiseChart = function (scope, element, config, bucket) {
-            config = config || {};
+        var initialiseChart = function (scope, element) {
+            var config = scope.config || {};
             var mergedOptions = getMergedOptions(scope, element, config);
             var chart = config.useHighStocks ? new Highcharts.StockChart(mergedOptions) : new Highcharts.Chart(mergedOptions);
             for (var i = 0; i < axisNames.length; i++) {
@@ -186,22 +186,26 @@ angular.module('highcharts-ng', [])
             chart.redraw();
 
 
-            initFunction(chart, bucket)
+            initFunction(chart, scope)
 
             return chart;
         };
 
-        var initFunction = function (chart, bucket) {
+        var initFunction = function (chart, scope) {
             var series = chart.series[0];
             var data = series.data;
-            var addValue = function (msg) {
-                var items = JSON.parse(msg.data),
-                    shift = data.length > 20
-                series.addPoint([items.ts, items.value], true, shift);
+            var addValue = function (item) {
+                var shift = data.length > 20;
+                series.addPoint([item.ts, item.value], true, shift);
 
             };
-            var feed = new EventSource("/values/" + bucket.name);
-            feed.addEventListener("message", addValue, false);
+
+            scope.subscribe(scope.bucket);
+            scope.$on('metricvalue', function (event, metric) {
+                var item = JSON.parse(metric.data);
+                if (item.metric = scope.bucket.name)
+                    addValue(item);
+            });
 
         }
 
@@ -211,7 +215,8 @@ angular.module('highcharts-ng', [])
             template: '<div></div>',
             scope: {
                 config: '=',
-                bucket: '='
+                bucket: '=',
+                subscribe: '='
             },
             link: function (scope, element, attrs) {
 
@@ -219,7 +224,7 @@ angular.module('highcharts-ng', [])
 
                 function initChart() {
                     if (scope.chart) scope.chart.destroy();
-                    scope.chart = initialiseChart(scope, element, scope.config, scope.bucket);
+                    scope.chart = initialiseChart(scope, element);
                 }
 
                 initChart();

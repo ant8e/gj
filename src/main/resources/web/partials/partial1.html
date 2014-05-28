@@ -5,7 +5,7 @@
 
     <div class="row placeholders">
         <div ng-repeat="b in buckets" class="col-xs-9 col-sm-6 placeholder">
-            <highchart id="chart1" config="chartConfig" bucket="b"></highchart>
+            <highchart id="chart1" config="chartConfig" bucket="b" subscribe="subscribe"></highchart>
             <h4> {{b.name}}</h4>
         </div>
 
