@@ -131,6 +131,7 @@ trait UIService extends HttpService with SprayJsonSupport {
   }
 
   import MyJsonProtocol._
+
   /**
    *
    */
@@ -199,18 +200,22 @@ trait UIService extends HttpService with SprayJsonSupport {
   /**
    * Route for the static content (hmtl,css,....)
    */
-  def staticRoutes = get {
-    decompressRequest()
-    compressResponse() {
-      // serve the index file if nothing specified the content of the web directory
-      pathSingleSlash {
-        getFromResource("web/index.html")
-      } ~ // or the content of the web directory
-        getFromResourceDirectory("web")
-    }
+  def staticRoutes: Route = get {
+    // serve the index file if nothing specified the content of the web directory
+    pathSingleSlash {
+      getFromResource("web/index.html")
+    } ~ // or the content of the web directory
+      getFromResourceDirectory("web")
   }
 
-  def routes = apiRoutes ~ valuesRoute ~ staticRoutes
+
+  def routes: Route = compressResponseIfRequested() {
+    decompressRequest() {
+      apiRoutes ~
+        valuesRoute ~
+        staticRoutes
+    }
+  }
 
 }
 
