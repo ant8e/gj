@@ -49,7 +49,7 @@ object Client extends App {
     }
   }
 
-  for (i ← 0 until 10)
+  for (i ← 0 until 2)
     system.actorOf(Props(classOf[MySender], s"test.bucket.$i")) ! "Go"
 
 }

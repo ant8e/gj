@@ -171,6 +171,7 @@ angular.module('highcharts-ng', [])
         };
 
         var initialiseChart = function (scope, element) {
+            console.log("Init chart for " + scope.bucket)
             var config = scope.config || {};
             var mergedOptions = getMergedOptions(scope, element, config);
             var chart = config.useHighStocks ? new Highcharts.StockChart(mergedOptions) : new Highcharts.Chart(mergedOptions);
@@ -186,7 +187,7 @@ angular.module('highcharts-ng', [])
             chart.redraw();
 
 
-            initFunction(chart, scope)
+            initFunction(chart, scope);
 
             return chart;
         };
@@ -197,14 +198,16 @@ angular.module('highcharts-ng', [])
             var addValue = function (item) {
                 var shift = data.length > 20;
                 series.addPoint([item.ts, item.value], true, shift);
-
+                console.log("Addvalue for " + item.metric)
             };
+
 
             scope.subscribe(scope.bucket);
             scope.$on('metricvalue', function (event, metric) {
                 var item = JSON.parse(metric.data);
-                if (item.metric = scope.bucket.name)
+                if (item.metric = scope.bucket.name) {
                     addValue(item);
+                }
             });
 
         }
@@ -229,56 +232,6 @@ angular.module('highcharts-ng', [])
 
                 initChart();
 
-                /*    scope.$watch('config.series', function (newSeries, oldSeries) {
-                 //do nothing when called on registration
-                 if (newSeries === oldSeries) return;
-                 processSeries(chart, newSeries);                                                 q
-                 chart.redraw();
-                 }, true);
-                 */
-//                scope.$watch('config.title', function (newTitle) {
-//                    chart.setTitle(newTitle, true);
-//                }, true);
-//
-//                scope.$watch('config.subtitle', function (newSubtitle) {
-//                    scope.chart.setTitle(true, newSubtitle);
-//                }, true);
-//
-//                scope.$watch('config.loading', function (loading) {
-//                    if (loading) {
-//                        scope.chart.showLoading();
-//                    } else {
-//                        scope.chart.hideLoading();
-//                    }
-//                });
-//
-//                scope.$watch('config.credits.enabled', function (enabled) {
-//                    if (enabled) {
-//                        scope.chart.credits.show();
-//                    } else if (chart.credits) {
-//                        scope.chart.credits.hide();
-//                    }
-//                });
-//
-//                scope.$watch('config.useHighStocks', function (useHighStocks) {
-//                    initChart();
-//                });
-//
-//                angular.forEach(axisNames, function (axisName) {
-//                    scope.$watch('config.' + axisName, function (newAxes, oldAxes) {
-//                        if (newAxes === oldAxes) return;
-//                        if (newAxes) {
-//                            chart[axisName][0].update(newAxes, false);
-//                            updateZoom(chart[axisName][0], angular.copy(newAxes));
-//                            scope.chart.redraw();
-//                        }
-//                    }, true);
-//                });
-//                scope.$watch('config.options', function (newOptions, oldOptions, scope) {
-//                    //do nothing when called on registration
-//                    if (newOptions === oldOptions) return;
-//                    initChart();
-//                }, true);
 
                 scope.$on('$destroy', function () {
                     if (scope.chart) scope.chart.destroy();
