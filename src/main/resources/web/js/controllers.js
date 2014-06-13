@@ -4,7 +4,7 @@
 
 var myAppControlers = angular.module('myApp.controllers', []);
 
-myAppControlers.controller('MyCtrl1', ['$scope', 'Bucket', 'metricSource', function ($scope, Bucket, metricSource) {
+myAppControlers.controller('DashboardCtrl', ['$scope', 'Bucket', 'metricSource', function ($scope, Bucket, metricSource) {
 
     $scope.values = [];
 
@@ -53,5 +53,9 @@ myAppControlers.controller('MyCtrl1', ['$scope', 'Bucket', 'metricSource', funct
 }]);
 
 myAppControlers.controller('buckets', ['$scope', 'Bucket', function ($scope, Bucket) {
+
+} ]);
+
+myAppControlers.controller('SettingsCtrl', ['$scope', function ($scope) {
 
 } ]);

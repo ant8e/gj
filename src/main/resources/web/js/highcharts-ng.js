@@ -192,9 +192,11 @@ angular.module('highcharts-ng', [])
         };
 
         var initFunction = function (chart, scope) {
-            var series = chart.series[0];
-            var data = series.data;
-            var addValue = function (item) {
+
+            var addValue = function (chart,item) {
+                var series = chart.series[0];
+                var data = series.data;
+
                 var shift = data.length > 20;
                 series.addPoint([item.ts, item.value], true, shift);
 
@@ -204,7 +206,7 @@ angular.module('highcharts-ng', [])
             scope.$on('metricvalue', function (event, metric) {
                 var item = JSON.parse(metric.data);
                 if (item.metric = scope.bucket.name)
-                    addValue(item);
+                    addValue(chart,item);
             });
 
         }
