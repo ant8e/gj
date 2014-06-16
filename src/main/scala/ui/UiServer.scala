@@ -19,10 +19,10 @@
 package ui
 
 import akka.actor._
-import gj.metric.{MetricValueAt, _}
-import gj.{ComponentConfiguration, MetricProvider, ActorSystemProvider}
+import gj.metric.{ MetricValueAt, _ }
+import gj.{ ComponentConfiguration, MetricProvider, ActorSystemProvider }
 import spray.routing._
-import akka.actor.{ActorRefFactory, ActorRef, Actor, Props}
+import akka.actor.{ ActorRefFactory, ActorRef, Actor, Props }
 import spray.http.StatusCodes
 import spray.httpx.SprayJsonSupport
 import spray.json.DefaultJsonProtocol
@@ -31,9 +31,9 @@ import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.duration._
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.{ Future, ExecutionContext }
 import scala.Some
-import ui.ValueStreamBridge.{CallBack, RegisterStopHandler}
+import ui.ValueStreamBridge.{ CallBack, RegisterStopHandler }
 
 /**
  * UI Server configuration
@@ -58,7 +58,6 @@ object UiServerConfiguration {
    * Default interface
    */
   val defaultInterface = "localhost"
-
 
   /**
    * represent all interfaces (IPV4 & IPV6)
@@ -88,11 +87,11 @@ trait UiServer extends ComponentConfiguration {
   //Binding the service actor to the address and port supplied by the UiServerConfiguration trait
   private val interface: String = config.uiServerBindAddress.getOrElse(UiServerConfiguration.defaultInterface)
   (IO(Http) ? Http.Bind(serviceActor, interface, config.uiServerPort)).onSuccess {
-    case Http.Bound(address) => system.log.info(s"$serviceName bound to ${address.toString}")
-    case e: Any => system.log.error(s"Unable to bind $serviceName : $e ")
+    case Http.Bound(address) ⇒ system.log.info(s"$serviceName bound to ${address.toString}")
+    case e: Any ⇒
+      system.log.error(s"Unable to bind $serviceName : $e ")
       system.shutdown()
   }
-
 
 }
 
@@ -155,7 +154,7 @@ trait UIService extends HttpService with SprayJsonSupport {
         dynamic {
           implicit val ex = actorRefFactory.dispatcher
           onSuccess(listMetric(b)) {
-            lm =>
+            lm ⇒
               if (lm.isEmpty)
                 complete(StatusCodes.NotFound)
               else metricValueStream(lm: _*)
@@ -169,12 +168,11 @@ trait UIService extends HttpService with SprayJsonSupport {
       metricProvider findMetric _
     }
 
-    Future.fold(l)(List[Metric]())((acc, f) => f match {
-      case Some(v) => v :: acc
-      case _ => acc
+    Future.fold(l)(List[Metric]())((acc, f) ⇒ f match {
+      case Some(v) ⇒ v :: acc
+      case _ ⇒ acc
     })
   }
-
 
   /**
    * Build a route that stream the values of the specified metric
@@ -186,16 +184,16 @@ trait UIService extends HttpService with SprayJsonSupport {
     import ServerSideEventsDirectives.sse
 
     sse {
-      (sseChannel: ActorRef, lastEvent: Option[String]) ⇒ {
-        for (m <- metrics) {
-          val valueActor = actorRefFactory.actorOf(Props(new ValueStreamBridge(sseChannel, m)))
-          metricProvider subscribe(m, valueActor)
-          valueActor ! ValueStreamBridge.RegisterStopHandler(() ⇒ metricProvider unSubscribe(m, valueActor))
+      (sseChannel: ActorRef, lastEvent: Option[String]) ⇒
+        {
+          for (m ← metrics) {
+            val valueActor = actorRefFactory.actorOf(Props(new ValueStreamBridge(sseChannel, m)))
+            metricProvider subscribe (m, valueActor)
+            valueActor ! ValueStreamBridge.RegisterStopHandler(() ⇒ metricProvider unSubscribe (m, valueActor))
+          }
         }
-      }
     }
   }
-
 
   /**
    * Route for the static content (hmtl,css,....)
@@ -207,7 +205,6 @@ trait UIService extends HttpService with SprayJsonSupport {
     } ~ // or the content of the web directory
       getFromResourceDirectory("web")
   }
-
 
   def routes: Route = compressResponseIfRequested() {
     decompressRequest() {
@@ -227,7 +224,7 @@ trait UIService extends HttpService with SprayJsonSupport {
  */
 class ValueStreamBridge(sseChannel: ActorRef, metric: Metric) extends Actor {
 
-  import ServerSideEventsDirectives.{Message, RegisterClosedHandler}
+  import ServerSideEventsDirectives.{ Message, RegisterClosedHandler }
   import ValueStreamBridge.Stop
 
   private var stopHandler: List[CallBack] = List()
@@ -242,7 +239,7 @@ class ValueStreamBridge(sseChannel: ActorRef, metric: Metric) extends Actor {
   override def receive: Actor.Receive = {
     case v: MetricValueAt[_] ⇒ sseChannel ! Message(toJson(v))
     case RegisterStopHandler(h) ⇒ stopHandler = stopHandler :+ h
-    case Stop => stopHandler foreach (h => h())
+    case Stop ⇒ stopHandler foreach (h ⇒ h())
   }
 
   def toJson(mv: MetricValueAt[_ <: Metric]) = s"""{"metric":"${mv.metric.bucket.name}","value":${mv.value},"ts":${mv.timestamp}}"""

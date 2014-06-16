@@ -49,7 +49,13 @@ object Client extends App {
     }
   }
 
-  for (i ← 0 until 2)
+  val n = if (args.length > 0) {
+    args(0).toInt
+  } else {
+    10
+  }
+  println(s"Spawning $n clients actor")
+  for (i ← 0 until n)
     system.actorOf(Props(classOf[MySender], s"test.bucket.$i")) ! "Go"
 
 }

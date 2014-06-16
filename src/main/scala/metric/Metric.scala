@@ -20,14 +20,12 @@ import java.nio.ByteBuffer
 import scala.reflect.ClassTag
 import java.lang.reflect.Constructor
 
-
 object `package` {
   /**
    * A Metric is a combination of a identifier, a style, a and valuetype
    */
   type Metric = MetricId with MetricType with MetricStyle
 }
-
 
 /**
  * A Metric bucket
@@ -89,7 +87,7 @@ trait Distinct extends MetricStyle {
   val styleTag = "D"
 }
 
-trait MetricId  {
+trait MetricId {
   /**
    * the bucket
    */
