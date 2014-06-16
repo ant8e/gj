@@ -47,8 +47,7 @@ myAppControlers.controller('DashboardCtrl', ['$scope', 'Bucket', 'metricSource',
     }
 
     $scope.buckets = Bucket.query();
-
-    console.log($scope.buckets)
+    $scope.showedBuckets = []
 
 }]);
 
