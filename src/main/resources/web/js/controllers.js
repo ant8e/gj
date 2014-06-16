@@ -27,7 +27,7 @@ myAppControlers.controller('DashboardCtrl', ['$scope', 'Bucket', 'metricSource',
         },
         series: $scope.chartSeries,
         title: {
-            text: 'Hello'
+            text: ''
         },
         xAxis: {
             type: 'datetime',

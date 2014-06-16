@@ -5,8 +5,8 @@
 
     <div class="row placeholders">
         <div ng-repeat="b in showedBuckets" class="col-xs-9 col-sm-6 placeholder">
+            <a href ng-click="showedBuckets.splice($index, 1)">remove</a>
             <highchart id="chart1" config="chartConfig" bucket="b" subscribe="subscribe"></highchart>
-            <h4> {{b.name}}</h4>   <a href ng-click="showedBuckets.splice($index, 1)">remove</a>
         </div>
 
     </div>

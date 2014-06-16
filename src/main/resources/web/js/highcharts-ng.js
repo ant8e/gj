@@ -171,6 +171,7 @@ angular.module('highcharts-ng', [])
 
         var initialiseChart = function (scope, element) {
             var config = scope.config || {};
+            config.title = {text: scope.bucket.name};
             var mergedOptions = getMergedOptions(scope, element, config);
             var chart = config.useHighStocks ? new Highcharts.StockChart(mergedOptions) : new Highcharts.Chart(mergedOptions);
             for (var i = 0; i < axisNames.length; i++) {
