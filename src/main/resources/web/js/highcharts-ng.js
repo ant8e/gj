@@ -197,7 +197,7 @@ angular.module('highcharts-ng', [])
                 var series = chart.series[0];
                 var data = series.data;
 
-                var shift = data.length > 20;
+                var shift = data.length > 120;
                 series.addPoint([item.ts, item.value], true, shift);
 
             };
