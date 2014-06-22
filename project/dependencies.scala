@@ -23,10 +23,12 @@ object Dependencies {
 
   val byteCask = "com.github.bytecask" %% "bytecask" % "1.0-SNAPSHOT"
 
-  val webJars = Seq("org.webjars" % "jquery" % "1.9.1"
+  val webJars = Seq("org.webjars" % "jquery" % "1.11.1"
     , "org.webjars" % "highcharts" % "4.0.1",
-    "org.webjars" % "highcharts-ng" % "0.0.6",
-    "org.webjars" % "highstock" % "1.3.9")
+    "org.webjars" % "highstock" % "1.3.9",
+    "org.webjars" % "bootstrap" % "3.1.1-2",
+    "org.webjars" % "angularjs" % "1.2.18"
+  )
 
 
   val deps = spray ++ webJars ++ Seq(akkaActor, byteCask, akkaTestKit % "test", scalaTest % "test")

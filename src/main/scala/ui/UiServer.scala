@@ -202,7 +202,7 @@ trait UIService extends HttpService with SprayJsonSupport {
     pathSingleSlash {
       getFromResource("web/index.html")
     } ~ // or the content of the web directory
-      pathPrefix("js") {
+      pathPrefix("wj") {
         getFromResourceDirectory("META-INF/resources/webjars")
       } ~
       getFromResourceDirectory("web")
