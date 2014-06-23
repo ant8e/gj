@@ -24,7 +24,7 @@
     <script src="wj/bootstrap/3.1.1/js/bootstrap.min.js"></script>
 
 </head>
-<body>
+<body ng-controller="MainCtrl">
 <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
     <div class="container-fluid">
         <div class="navbar-header">
@@ -41,8 +41,8 @@
                 <input type="text" class="form-control" placeholder="Search...">
             </form>
             <ul class="nav navbar-nav navbar-right">
-                <li><a href="#/dashboard">Dashboard</a></li>
-                <li><a href="#/settings">Settings</a></li>
+                <li ng-class="{active: activePath=='/dashboard'}"><a href="dashboard">Dashboard</a></li>
+                <li ng-class="{active: activePath=='/settings'}"><a href="settings">Settings</a></li>
                 <li><a href="#">Help</a></li>
             </ul>
         </div>

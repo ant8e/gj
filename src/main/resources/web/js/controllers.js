@@ -4,6 +4,15 @@
 
 var myAppControlers = angular.module('myApp.controllers', []);
 
+myAppControlers.controller('MainCtrl', ['$scope', '$location', '$route', function ($scope, $location, $route) {
+    $scope.activePath = null;
+    $scope.$on('$routeChangeSuccess', function () {
+        $scope.activePath = $location.path();
+        console.log($location.path());
+    });
+}]);
+
+
 myAppControlers.controller('DashboardCtrl', ['$scope', 'Bucket', 'metricSource', function ($scope, Bucket, metricSource) {
 
     $scope.values = [];
@@ -16,7 +25,7 @@ myAppControlers.controller('DashboardCtrl', ['$scope', 'Bucket', 'metricSource',
     $scope.chartConfig = {
         options: {
             chart: {
-              //  type: 'spline',
+                //  type: 'spline',
                 animation: Highcharts.svg,
                 zoomType: 'x'
             },
