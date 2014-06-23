@@ -8,7 +8,7 @@ object Dependencies {
   val resolvers = Seq(
     "Typesafe repo" at "http://repo.typesafe.com/typesafe/releases/",
     "spray repo" at "http://repo.spray.io/",
-//    "spray on the edge" at "http://nightlies.spray.io",
+    //    "spray on the edge" at "http://nightlies.spray.io",
     "sonatype-snapshots" at "https://oss.sonatype.org/content/groups/public")
 
   val spray = Seq("io.spray" % "spray-can" % sprayVersion,
@@ -23,5 +23,13 @@ object Dependencies {
 
   val byteCask = "com.github.bytecask" %% "bytecask" % "1.0-SNAPSHOT"
 
-  val deps = spray ++ Seq(akkaActor,byteCask, akkaTestKit % "test", scalaTest % "test")
+  val webJars = Seq("org.webjars" % "jquery" % "1.11.1"
+    , "org.webjars" % "highcharts" % "4.0.1",
+    "org.webjars" % "highstock" % "1.3.9",
+    "org.webjars" % "bootstrap" % "3.1.1-2",
+    "org.webjars" % "angularjs" % "1.2.18"
+  )
+
+
+  val deps = spray ++ webJars ++ Seq(akkaActor, byteCask, akkaTestKit % "test", scalaTest % "test")
 }

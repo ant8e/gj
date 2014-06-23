@@ -4,7 +4,7 @@
 
 var myAppControlers = angular.module('myApp.controllers', []);
 
-myAppControlers.controller('MyCtrl1', ['$scope', 'Bucket', 'metricSource', function ($scope, Bucket, metricSource) {
+myAppControlers.controller('DashboardCtrl', ['$scope', 'Bucket', 'metricSource', function ($scope, Bucket, metricSource) {
 
     $scope.values = [];
 
@@ -16,18 +16,35 @@ myAppControlers.controller('MyCtrl1', ['$scope', 'Bucket', 'metricSource', funct
     $scope.chartConfig = {
         options: {
             chart: {
-                type: 'spline',
+              //  type: 'spline',
                 animation: Highcharts.svg,
+                zoomType: 'x'
             },
             plotOptions: {
-                series: {
-                    stacking: ''
+                area: {
+                    fillColor: {
+                        linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1},
+                        stops: [
+                            [0, Highcharts.getOptions().colors[0]],
+                            [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                        ]
+                    },
+                    marker: {
+                        radius: 2
+                    },
+                    lineWidth: 1,
+                    states: {
+                        hover: {
+                            lineWidth: 1
+                        }
+                    },
+                    threshold: null
                 }
             }
         },
         series: $scope.chartSeries,
         title: {
-            text: 'Hello'
+            text: ''
         },
         xAxis: {
             type: 'datetime',
@@ -47,11 +64,14 @@ myAppControlers.controller('MyCtrl1', ['$scope', 'Bucket', 'metricSource', funct
     }
 
     $scope.buckets = Bucket.query();
-
-    console.log($scope.buckets)
+    $scope.showedBuckets = []
 
 }]);
 
 myAppControlers.controller('buckets', ['$scope', 'Bucket', function ($scope, Bucket) {
+
+} ]);
+
+myAppControlers.controller('SettingsCtrl', ['$scope', function ($scope) {
 
 } ]);
