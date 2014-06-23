@@ -18,11 +18,11 @@
 package gj
 
 import gj.actor._
-import ValuesProvider.{UnSubscribe, Subscribe}
+import ValuesProvider.{ UnSubscribe, Subscribe }
 import akka.actor.ActorSystem
 import akka.util.Timeout
 import org.scalatest.FunSpec
-import akka.testkit.{TestProbe, ImplicitSender, TestKit, TestActorRef}
+import akka.testkit.{ TestProbe, ImplicitSender, TestKit, TestActorRef }
 import akka.pattern.ask
 import org.scalatest.matchers.MustMatchers
 import scala.concurrent.duration._
@@ -33,7 +33,7 @@ import RawMetricHandler._
 import metric._
 import scala.util.Success
 import ui.ValueStreamBridge
-import ui.ServerSideEventsDirectives.{Message, RegisterClosedHandler}
+import ui.ServerSideEventsDirectives.{ Message, RegisterClosedHandler }
 import ui.ValueStreamBridge.RegisterStopHandler
 
 class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec with ImplicitSender with MustMatchers {
@@ -280,14 +280,14 @@ class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec wit
       val vba = TestActorRef(new ValueStreamBridge(self, counter))
       expectMsgClass(classOf[RegisterClosedHandler])
       vba ! MetricValueAt[counter.type](counter, 0, 1)
-      expectMsg(Message( """{"metric":"test.bucket","value":1,"ts":0}"""))
+      expectMsg(Message("""{"metric":"test.bucket","value":1,"ts":0}"""))
     }
     it("should stop correctly") {
       val vba = TestActorRef(new ValueStreamBridge(self, counter))
       val probe = TestProbe()
       probe watch vba
       val rch = expectMsgClass(classOf[RegisterClosedHandler])
-      vba ! RegisterStopHandler(() => {
+      vba ! RegisterStopHandler(() ⇒ {
         self ! "Yeah"
       })
       rch.handler()
