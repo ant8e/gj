@@ -73,7 +73,17 @@ myAppControlers.controller('DashboardCtrl', ['$scope', 'Bucket', 'metricSource',
     }
 
     $scope.buckets = Bucket.query();
-    $scope.showedBuckets = []
+    $scope.showedBuckets = [];
+
+    $scope.addBucket = function (b) {
+
+        if (b != null && b != "") {
+            $scope.showedBuckets.push(b);
+        }
+    };
+    $scope.removeBucket = function (i) {
+        $scope.showedBuckets.splice(i, 1)
+    };
 
 }]);
 

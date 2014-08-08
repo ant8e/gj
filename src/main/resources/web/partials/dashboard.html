@@ -1,14 +1,14 @@
 <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
     <h1 class="page-header">Dashboard</h1>
     <select ng-model="bucket" ng-options="b.name for b in buckets |orderBy :'name'"/>
-        <button type="button" class="btn btn-default btn-xs" ng-click="showedBuckets.push(bucket)">
+        <button type="button" class="btn btn-default btn-xs" ng-click="addBucket(bucket)">
             <span class="glyphicon glyphicon-plus"></span>
         </button>
 
     <div class="row placeholders">
         <div ng-repeat="b in showedBuckets" class="col-xs-9 col-sm-6 placeholder">
             <highchart id="chart1" config="chartConfig" bucket="b" subscribe="subscribe"/>
-            <button type="button" class="btn btn-default btn-xs" ng-click="showedBuckets.splice($index, 1)">
+            <button type="button" class="btn btn-default btn-xs" ng-click="removeBucket($index)">
                 <span class="glyphicon glyphicon-remove"></span>
             </button>
         </div>
