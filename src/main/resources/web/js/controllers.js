@@ -25,7 +25,7 @@ myAppControlers.controller('DashboardCtrl', ['$scope', 'Bucket', 'metricSource',
     $scope.chartConfig = {
         options: {
             chart: {
-                //  type: 'spline',
+                type: 'area',
                 animation: Highcharts.svg,
                 zoomType: 'x'
             },
@@ -39,7 +39,8 @@ myAppControlers.controller('DashboardCtrl', ['$scope', 'Bucket', 'metricSource',
                         ]
                     },
                     marker: {
-                        radius: 2
+                        enabled: false
+//                        radius: 2
                     },
                     lineWidth: 1,
                     states: {
