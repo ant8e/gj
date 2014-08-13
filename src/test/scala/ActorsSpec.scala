@@ -21,7 +21,7 @@ import gj.actor._
 import ValuesProvider.{ UnSubscribe, Subscribe }
 import akka.actor.ActorSystem
 import akka.util.Timeout
-import org.scalatest.FunSpec
+import org.scalatest.{FunSpecLike, FunSpec}
 import akka.testkit.{ TestProbe, ImplicitSender, TestKit, TestActorRef }
 import akka.pattern.ask
 import org.scalatest.matchers.MustMatchers
@@ -36,7 +36,7 @@ import ui.ValueStreamBridge
 import ui.ServerSideEventsDirectives.{ Message, RegisterClosedHandler }
 import ui.ValueStreamBridge.RegisterStopHandler
 
-class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpec with ImplicitSender with MustMatchers {
+class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpecLike with ImplicitSender with MustMatchers {
   def this() = this(ActorSystem("ActorsSpec"))
 
   implicit val tout = Timeout(1 second)

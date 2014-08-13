@@ -19,7 +19,7 @@ object Dependencies {
 
   val akkaActor = "com.typesafe.akka" %% "akka-actor" % akkaVersion
   val akkaTestKit = "com.typesafe.akka" %% "akka-testkit" % akkaVersion
-  val scalaTest = "org.scalatest" %% "scalatest" % "1.9.1"
+  val scalaTest = "org.scalatest" %% "scalatest" % "2.2.1"
 
   val byteCask = "com.github.bytecask" %% "bytecask" % "1.0-SNAPSHOT"
 
