@@ -8,7 +8,7 @@ myAppControlers.controller('MainCtrl', ['$scope', '$location', '$route', functio
     $scope.activePath = null;
     $scope.$on('$routeChangeSuccess', function () {
         $scope.activePath = $location.path();
-        console.log($location.path());
+//        console.log($location.path());
     });
 }]);
 
@@ -87,6 +87,8 @@ myAppControlers.controller('DashboardCtrl', ['$scope', 'Bucket', 'MetricSource',
     };
 
 }]);
+
+
 
 myAppControlers.controller('buckets', ['$scope', 'Bucket', function ($scope, Bucket) {
 
