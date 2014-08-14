@@ -8,7 +8,7 @@ angular.module('myApp.services', ['ngResource'])
         function ($resource) {
             return $resource('api/buckets', {}, {});
         }])
-    .factory('metricSource', function () {
+    .factory('MetricSource', function () {
         var es = null;
         var buckets = {};
         return {
@@ -19,7 +19,7 @@ angular.module('myApp.services', ['ngResource'])
                 }
                 var s = '';
                 for (var b in buckets) {
-                    if (buckets.hasOwnProperty( b) && buckets[b])
+                    if (buckets.hasOwnProperty(b) && buckets[b])
                         s = s + b + '/';
                 }
 
@@ -38,5 +38,23 @@ angular.module('myApp.services', ['ngResource'])
                 this.renew($scope);
 
             }
+        };
+    })
+    .factory('ActiveGraphs', function () {
+        var showedBuckets = [];
+        return {
+            getBuckets: function () {
+                return showedBuckets;
+            },
+            addBucket: function (b) {
+
+                if (b != null && b != "") {
+                    showedBuckets.push(b);
+                }
+            },
+            removeBucket: function (i) {
+                showedBuckets.splice(i, 1)
+            }
+
         };
     });

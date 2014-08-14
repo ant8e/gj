@@ -13,7 +13,7 @@ myAppControlers.controller('MainCtrl', ['$scope', '$location', '$route', functio
 }]);
 
 
-myAppControlers.controller('DashboardCtrl', ['$scope', 'Bucket', 'metricSource', function ($scope, Bucket, metricSource) {
+myAppControlers.controller('DashboardCtrl', ['$scope', 'Bucket', 'MetricSource', 'ActiveGraphs', function ($scope, Bucket, metricSource, ActiveGraphs) {
 
     $scope.values = [];
 
@@ -68,22 +68,22 @@ myAppControlers.controller('DashboardCtrl', ['$scope', 'Bucket', 'metricSource',
 
     $scope.subscribe = function (b) {
         metricSource.subscribe($scope, b)
-    }
+    };
+
     $scope.unsubscribe = function (b) {
         metricSource.unsubscribe(b)
-    }
+    };
 
     $scope.buckets = Bucket.query();
-    $scope.showedBuckets = [];
+
+    $scope.showedBuckets = ActiveGraphs.getBuckets();
 
     $scope.addBucket = function (b) {
-
-        if (b != null && b != "") {
-            $scope.showedBuckets.push(b);
-        }
+        ActiveGraphs.addBucket(b);
     };
+
     $scope.removeBucket = function (i) {
-        $scope.showedBuckets.splice(i, 1)
+        ActiveGraphs.removeBucket(i);
     };
 
 }]);
