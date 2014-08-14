@@ -49,13 +49,16 @@ myAppServices.factory('ActiveGraphs', function () {
         getBuckets: function () {
             return showedBuckets;
         },
+        hasBucket: function(bname){
+            return _contains(showedBuckets,bname);
+        },
         addBucket: function (b) {
 
-            if (b != null && b != "") {
+            if (b != null && b != "" && ! _.contains(showedBuckets, b)) {
                 showedBuckets.push(b);
             }
         },
-        removeBucket: function (i) {
+        removeBucketByIndex: function (i) {
             showedBuckets.splice(i, 1)
         }
 
