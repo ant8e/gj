@@ -4,7 +4,7 @@ import AssemblyKeys._
 import DockerKeys._
 import sbtdocker.mutable.Dockerfile
 
-name := "GraphJunkie"
+name := "graphjunkie"
 
 version := "0.1-SNAPSHOT"
 
@@ -43,6 +43,7 @@ dockerfile in docker := {
   new Dockerfile {
     from("dockerfile/java")
     add(artifact, artifactTargetPath)
+    expose(8080)
     entryPoint("java", "-jar", artifactTargetPath)
   }
 }
