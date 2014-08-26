@@ -43,24 +43,34 @@ myAppServices.factory('MetricSource', function () {
     };
 });
 
-myAppServices.factory('ActiveGraphs', function () {
+myAppServices.factory('ActiveGraphs', ['rootScope', function ($rootScope) {
     var showedBuckets = [];
+
+    var notifyChange = function (){
+        $rootScope.$broadcast('ActiveGraphsChangedEvent');
+    };
     return {
         getBuckets: function () {
             return showedBuckets;
         },
         hasBucket: function(bname){
-            return _contains(showedBuckets,bname);
+            return _.contains(showedBuckets,bname);
         },
         addBucket: function (b) {
 
             if (b != null && b != "" && ! _.contains(showedBuckets, b)) {
                 showedBuckets.push(b);
+                notifyChange();
             }
         },
         removeBucketByIndex: function (i) {
             showedBuckets.splice(i, 1)
+            notifyChange();
+        },
+        removeBucket: function (b) {
+            showedBuckets = _.without(showedBuckets,b)
+            notifyChange();
         }
 
     };
-});
+}]);

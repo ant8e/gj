@@ -76,18 +76,16 @@ myAppControlers.controller('DashboardCtrl', ['$scope', 'Bucket', 'MetricSource',
 
     $scope.buckets = Bucket.query();
 
+    $scope.ActiveGraphs = ActiveGraphs;
+
     $scope.showedBuckets = ActiveGraphs.getBuckets();
 
-    $scope.addBucket = function (b) {
-        ActiveGraphs.addBucket(b);
-    };
+    $scope.$on('ActiveGraphsChangedEvent', function () {
+        $scope.showedBuckets = ActiveGraphs.getBuckets();
+    });
 
-    $scope.removeBucketByIndex = function (i) {
-        ActiveGraphs.removeBucketByIndex(i);
-    };
 
 }]);
-
 
 
 myAppControlers.controller('buckets', ['$scope', 'Bucket', function ($scope, Bucket) {
