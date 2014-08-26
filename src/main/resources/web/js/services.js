@@ -3,7 +3,7 @@
 /* Services */
 
 
-var myAppServices = angular.module('myApp.services', ['ngResource']);
+var myAppServices = angular.module('myApp.services', ['ng','ngResource']);
 
 myAppServices.factory('Bucket', ['$resource',
     function ($resource) {
@@ -43,7 +43,7 @@ myAppServices.factory('MetricSource', function () {
     };
 });
 
-myAppServices.factory('ActiveGraphs', ['rootScope', function ($rootScope) {
+myAppServices.factory('ActiveGraphs', ['$rootScope', function ($rootScope) {
     var showedBuckets = [];
 
     var notifyChange = function (){
