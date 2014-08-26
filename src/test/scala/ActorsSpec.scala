@@ -21,7 +21,7 @@ import gj.actor._
 import ValuesProvider.{ UnSubscribe, Subscribe }
 import akka.actor.ActorSystem
 import akka.util.Timeout
-import org.scalatest.{FunSpecLike, FunSpec}
+import org.scalatest.{ FunSpecLike, FunSpec }
 import akka.testkit.{ TestProbe, ImplicitSender, TestKit, TestActorRef }
 import akka.pattern.ask
 import org.scalatest.matchers.MustMatchers

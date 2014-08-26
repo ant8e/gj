@@ -94,7 +94,7 @@ object MetricRepository {
 /**
  * This trait maintains a long variable and defines a partial Receive function to act on that value
  */
-trait ValueAggregator[T <: Metric ] {
+trait ValueAggregator[T <: Metric] {
   self: MemoryMetricStore[T] with Actor ⇒
 
   import MetricRepository._

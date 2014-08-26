@@ -1,8 +1,10 @@
 
 import scalariform.formatter.preferences._
 import AssemblyKeys._
+import DockerKeys._
+import sbtdocker.mutable.Dockerfile
 
-name := "GraphJunkie"
+name := "graphjunkie"
 
 version := "0.1-SNAPSHOT"
 
@@ -17,6 +19,8 @@ libraryDependencies ++= Dependencies.deps
 
 scalariformSettings
 
+dockerSettings
+
 ScalariformKeys.preferences := FormattingPreferences()
   .setPreference(AlignParameters, true)
   .setPreference(RewriteArrowSymbols, true)
@@ -27,3 +31,19 @@ assemblySettings
 mainClass in assembly := Some("gj.Main")
 
 jarName in assembly := "gj.jar"
+
+
+
+//Docker file definition
+docker <<= (docker dependsOn assembly)
+
+dockerfile in docker := {
+  val artifact = (outputPath in assembly).value
+  val artifactTargetPath = s"/app/${artifact.name}"
+  new Dockerfile {
+    from("dockerfile/java")
+    add(artifact, artifactTargetPath)
+    expose(8080)
+    entryPoint("java", "-jar", artifactTargetPath)
+  }
+}
