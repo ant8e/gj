@@ -1,8 +1,11 @@
 <div class="col-sm-3 col-md-2 sidebar">
     <ul class="nav nav-sidebar nav-pils" ng-repeat="b in buckets | orderBy :'name'">
         <li><p class="navbar-text"> {{b.name}}</p>
-            <button type="button" class="btn btn-default btn-xs navbar-btn" ng-click="addBucket(b)"
+            <button type="button" class="btn btn-default btn-xs navbar-btn" ng-click="ActiveGraphs.addBucket(b)" >
                 <span class="glyphicon glyphicon-plus"></span>
+            </button>
+            <button type="button" class="btn btn-default btn-xs navbar-btn" ng-click="ActiveGraphs.removeBucket(b)" >
+                <span class="glyphicon glyphicon-minus"></span>
             </button>
         </li>
     </ul>
@@ -10,12 +13,13 @@
 
 
 <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
-    <h1 class="page-header">Dashboard</h1>
+    <h3 class="page-header">Dashboard</h3>
+
 
     <div class="row placeholders">
         <div ng-repeat="b in showedBuckets" class="col-xs-9 col-sm-6 placeholder">
             <highchart id="chart1" config="chartConfig" bucket="b" subscribe="subscribe"/>
-            <button type="button" class="btn btn-default btn-xs" ng-click="removeBucketByIndex($index)">
+            <button type="button" class="btn btn-default btn-xs" ng-click="ActiveGraphs.removeBucketByIndex($index)">
                 <span class="glyphicon glyphicon-remove"></span>
             </button>
         </div>

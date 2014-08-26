@@ -200,13 +200,15 @@ trait UIService extends HttpService with SprayJsonSupport {
    */
   def staticRoutes: Route = get {
     // serve the index file if nothing specified the content of the web directory
-    pathSingleSlash {
+    /*pathSingleSlash {
       getFromResource("web/index.html")
     } ~ // or the content of the web directory
+      */
       pathPrefix("wj") {
         getFromResourceDirectory("META-INF/resources/webjars")
       } ~
-      getFromResourceDirectory("web")
+      getFromResourceDirectory("web")~
+        getFromResource("web/index.html")
   }
 
   def routes: Route = compressResponseIfRequested() {
