@@ -210,13 +210,13 @@ trait UIService extends HttpService with SprayJsonSupport {
     cache(routeCache()) {
       // Serving webjars from the wj prefix
       pathPrefix("wj") {
-        //Allow clients to cache js librairies for one day
-        respondWithHeader(`Cache-Control`(`max-age`(1.day.toSeconds))) {
+        //Allow clients to cache js librairies for one year
+        respondWithHeader(`Cache-Control`(`max-age`(365.days.toSeconds))) {
           getFromResourceDirectory("META-INF/resources/webjars")
         }
       } ~
-        //Allow clients to cache js/css/html for one hour
-        respondWithHeader(`Cache-Control`(`max-age`(1.hour.toSeconds))) {
+        //Allow clients to cache js/css/html for one week
+        respondWithHeader(`Cache-Control`(`max-age`(7.days.toSeconds))) {
           // Then anything form the web directory
           getFromResourceDirectory("web") ~
             // Finaly, fallback to the index
