@@ -27,8 +27,9 @@ object Dependencies {
   val webJars = Seq("org.webjars" % "jquery" % "1.11.1"
     , "org.webjars" % "highcharts" % "4.0.1",
     "org.webjars" % "highstock" % "1.3.9",
+    "org.webjars" % "chartjs" % "1.0.1-beta.4",
     "org.webjars" % "bootstrap" % "3.1.1-2",
-    "org.webjars" % "angularjs" % "1.2.18"   ,
+    "org.webjars" % "angularjs" % "1.2.18",
     "org.webjars" % "underscorejs" % "1.6.0-3"
   )
 

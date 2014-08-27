@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>GraphJunkie</title>
     <link rel="stylesheet" href="wj/bootstrap/3.1.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="js/angularchart/angular-chart.css">
+
     <link rel="stylesheet" href="css/app.css"/>
     <link rel="shortcut icon" href="gj.ico"/>
 
@@ -38,6 +40,9 @@
 
 <div class="container-fluid">
     <div class="row">
+        <canvas id="line" class="chart chart-line" data="data" labels="labels" legend="true" series="series" options="options" click="onClick"></canvas>
+    </div>
+    <div class="row">
         <ng-view></ng-view>
     </div>
 </div>
@@ -54,6 +59,8 @@
 <script src="js/controllers.js"></script>
 <script src="js/directives.js"></script>
 <script src="js/highcharts-ng.js"></script>
+<script src="wj/chartjs/1.0.1-beta.4/Chart.min.js"></script>
+<script src="js/angularchart/angular-chart.js"></script>
 <script src="wj/bootstrap/3.1.1/js/bootstrap.min.js"></script>
 
 </body>
