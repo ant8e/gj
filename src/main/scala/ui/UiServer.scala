@@ -19,11 +19,14 @@
 package ui
 
 import akka.actor._
-import gj.metric.{ MetricValueAt, _ }
-import gj.{ ComponentConfiguration, MetricProvider, ActorSystemProvider }
+import gj.metric.{MetricValueAt, _}
+import gj.{ComponentConfiguration, MetricProvider, ActorSystemProvider}
+import spray.http.CacheDirectives.public
+import spray.http.CacheDirectives.`max-age`
 import spray.routing._
-import akka.actor.{ ActorRefFactory, ActorRef, Actor, Props }
+import akka.actor.{ActorRefFactory, ActorRef, Actor, Props}
 import spray.http.StatusCodes
+import spray.http.HttpHeaders.`Cache-Control`
 import spray.httpx.SprayJsonSupport
 import spray.json.DefaultJsonProtocol
 import spray.can.Http
@@ -31,9 +34,9 @@ import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.duration._
-import scala.concurrent.{ Future, ExecutionContext }
+import scala.concurrent.{Future, ExecutionContext}
 import scala.Some
-import ui.ValueStreamBridge.{ CallBack, RegisterStopHandler }
+import ui.ValueStreamBridge.{CallBack, RegisterStopHandler}
 
 /**
  * UI Server configuration
@@ -184,14 +187,13 @@ trait UIService extends HttpService with SprayJsonSupport {
     import ServerSideEventsDirectives.sse
 
     sse {
-      (sseChannel: ActorRef, lastEvent: Option[String]) ⇒
-        {
-          for (m ← metrics) {
-            val valueActor = actorRefFactory.actorOf(Props(new ValueStreamBridge(sseChannel, m)))
-            metricProvider subscribe (m, valueActor)
-            valueActor ! ValueStreamBridge.RegisterStopHandler(() ⇒ metricProvider unSubscribe (m, valueActor))
-          }
+      (sseChannel: ActorRef, lastEvent: Option[String]) ⇒ {
+        for (m ← metrics) {
+          val valueActor = actorRefFactory.actorOf(Props(new ValueStreamBridge(sseChannel, m)))
+          metricProvider subscribe(m, valueActor)
+          valueActor ! ValueStreamBridge.RegisterStopHandler(() ⇒ metricProvider unSubscribe(m, valueActor))
         }
+      }
     }
   }
 
@@ -199,16 +201,17 @@ trait UIService extends HttpService with SprayJsonSupport {
    * Route for the static content (hmtl,css,....)
    */
   def staticRoutes: Route = get {
-    // serve the index file if nothing specified the content of the web directory
-    /*pathSingleSlash {
-      getFromResource("web/index.html")
-    } ~ // or the content of the web directory
-      */
-      pathPrefix("wj") {
+
+    // Serving webjars from the wj prefix
+    pathPrefix("wj") {
+      respondWithHeader(`Cache-Control`(public, `max-age`(60L * 60L * 24L))) {
         getFromResourceDirectory("META-INF/resources/webjars")
-      } ~
-      getFromResourceDirectory("web")~
-        getFromResource("web/index.html")
+      }
+    } ~
+      // Then anything form the web directory
+      getFromResourceDirectory("web") ~
+      // Finaly, fallback to the index
+      getFromResource("web/index.html")
   }
 
   def routes: Route = compressResponseIfRequested() {
@@ -229,7 +232,7 @@ trait UIService extends HttpService with SprayJsonSupport {
  */
 class ValueStreamBridge(sseChannel: ActorRef, metric: Metric) extends Actor {
 
-  import ServerSideEventsDirectives.{ Message, RegisterClosedHandler }
+  import ServerSideEventsDirectives.{Message, RegisterClosedHandler}
   import ValueStreamBridge.Stop
 
   private var stopHandler: List[CallBack] = List()
