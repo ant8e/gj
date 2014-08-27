@@ -33,6 +33,7 @@ import spray.can.Http
 import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
+import spray.routing.directives.CachingDirectives
 import scala.concurrent.duration._
 import scala.concurrent.{Future, ExecutionContext}
 import scala.Some
@@ -201,17 +202,21 @@ trait UIService extends HttpService with SprayJsonSupport {
    * Route for the static content (hmtl,css,....)
    */
   def staticRoutes: Route = get {
-
-    // Serving webjars from the wj prefix
-    pathPrefix("wj") {
-      respondWithHeader(`Cache-Control`(`max-age`(60L * 60L * 24L))) {
-        getFromResourceDirectory("META-INF/resources/webjars")
-      }
-    } ~
-      // Then anything form the web directory
-      getFromResourceDirectory("web") ~
-      // Finaly, fallback to the index
-      getFromResource("web/index.html")
+    // Static content can live forever in cache
+    import CachingDirectives._
+    cache(routeCache()) {
+      // Serving webjars from the wj prefix
+      pathPrefix("wj") {
+        //Allow clients to cache js librairies for one day
+        respondWithHeader(`Cache-Control`(`max-age`(60L * 60L * 24L))) {
+          getFromResourceDirectory("META-INF/resources/webjars")
+        }
+      } ~
+        // Then anything form the web directory
+        getFromResourceDirectory("web") ~
+        // Finaly, fallback to the index
+        getFromResource("web/index.html")
+    }
   }
 
   def routes: Route = compressResponseIfRequested() {
