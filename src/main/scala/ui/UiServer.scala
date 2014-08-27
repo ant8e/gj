@@ -25,7 +25,7 @@ import spray.http.CacheDirectives.public
 import spray.http.CacheDirectives.`max-age`
 import spray.routing._
 import akka.actor.{ActorRefFactory, ActorRef, Actor, Props}
-import spray.http.StatusCodes
+import spray.http.{HttpHeaders, StatusCodes}
 import spray.http.HttpHeaders.`Cache-Control`
 import spray.httpx.SprayJsonSupport
 import spray.json.DefaultJsonProtocol
@@ -204,7 +204,7 @@ trait UIService extends HttpService with SprayJsonSupport {
 
     // Serving webjars from the wj prefix
     pathPrefix("wj") {
-      respondWithHeader(`Cache-Control`(public, `max-age`(60L * 60L * 24L))) {
+      respondWithHeader(`Cache-Control`(`max-age`(60L * 60L * 24L))) {
         getFromResourceDirectory("META-INF/resources/webjars")
       }
     } ~
