@@ -23,6 +23,7 @@ import gj.metric.{MetricValueAt, _}
 import gj.{ComponentConfiguration, MetricProvider, ActorSystemProvider}
 import spray.http.CacheDirectives.public
 import spray.http.CacheDirectives.`max-age`
+import spray.http.CacheDirectives.`no-cache`
 import spray.routing._
 import akka.actor.{ActorRefFactory, ActorRef, Actor, Props}
 import spray.http.{HttpHeaders, StatusCodes}
@@ -141,9 +142,11 @@ trait UIService extends HttpService with SprayJsonSupport {
   def apiRoutes = pathPrefix("api") {
     get {
       implicit val ex = actorRefFactory.dispatcher
-      path("buckets") {
-        complete {
-          metricProvider.listMetrics map (_ map (m ⇒ BucketResponse(m.bucket.name)))
+      respondWithHeader(`Cache-Control`(`no-cache`)) {
+        path("buckets") {
+          complete {
+            metricProvider.listMetrics map (_ map (m ⇒ BucketResponse(m.bucket.name)))
+          }
         }
       }
     }
@@ -212,13 +215,13 @@ trait UIService extends HttpService with SprayJsonSupport {
           getFromResourceDirectory("META-INF/resources/webjars")
         }
       } ~
-           //Allow clients to cache js/css/html for one hour
+        //Allow clients to cache js/css/html for one hour
         respondWithHeader(`Cache-Control`(`max-age`(1.hour.toSeconds))) {
-        // Then anything form the web directory
-        getFromResourceDirectory("web") ~
-          // Finaly, fallback to the index
-          getFromResource("web/index.html")
-      }
+          // Then anything form the web directory
+          getFromResourceDirectory("web") ~
+            // Finaly, fallback to the index
+            getFromResource("web/index.html")
+        }
     }
   }
 
