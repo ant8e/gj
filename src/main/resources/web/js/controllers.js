@@ -96,18 +96,34 @@ myAppControlers.controller('SettingsCtrl', ['$scope', function ($scope) {
 
 } ]);
 
-myAppControlers.controller('ChartCtrl', ['$scope', function ($scope) {
-    $scope.options ={ bezierCurve : false};
-    $scope.labels = ["January", "February", "March", "April", "May", "June", "July"];
-    $scope.series = ['Series A', 'Series B'];
+myAppControlers.controller('ChartCtrl', ['$scope', 'MetricSource', function ($scope, metricSource) {
+    //  $scope.options = { bezierCurve: true, animation :false};
+    $scope.options = { animation: false, showScale: false, showTooltips: false, pointDot: false, datasetStrokeWidth: 0.5 };
+    $scope.labels = [''];
+    $scope.series = [$scope.bucket.name];
     $scope.data = [
-        [65, 59, 80, 81, 56, 55, 40],
-        [28, 48, 40, 19, 86, 27, 90]
+        [0]
     ];
     $scope.onClick = function (points, evt) {
         console.log(points, evt);
+        $scope.labels.push('');
+        $scope.data[0].push(10);
     };
-    console.log("Chart for bucket ", $scope.b.name);
 
+
+    metricSource.subscribe($scope, $scope.bucket);
+
+    function extracted(metric) {
+        var item = JSON.parse(metric.data);
+        if (item.metric == $scope.bucket.name) {
+           $scope.labels.push('');
+            $scope.data[0].push(item.value);
+            $scope.$digest();
+        }
+    }
+
+    $scope.$on('metricvalue', function (event, metric) {
+        extracted(metric);
+    });
 
 } ]);
