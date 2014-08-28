@@ -8,16 +8,6 @@ myAppControlers.controller('MainCtrl', ['$scope', '$location', '$route', functio
     $scope.activePath = null;
     $scope.$on('$routeChangeSuccess', function () {
         $scope.activePath = $location.path();
-        $scope.options ={ bezierCurve : false};
-        $scope.labels = ["January", "February", "March", "April", "May", "June", "July"];
-        $scope.series = ['Series A', 'Series B'];
-        $scope.data = [
-            [65, 59, 80, 81, 56, 55, 40],
-            [28, 48, 40, 19, 86, 27, 90]
-        ];
-        $scope.onClick = function (points, evt) {
-            console.log(points, evt);
-        };
 //        console.log($location.path());
     });
 }]);
@@ -103,5 +93,21 @@ myAppControlers.controller('buckets', ['$scope', 'Bucket', function ($scope, Buc
 } ]);
 
 myAppControlers.controller('SettingsCtrl', ['$scope', function ($scope) {
+
+} ]);
+
+myAppControlers.controller('ChartCtrl', ['$scope', function ($scope) {
+    $scope.options ={ bezierCurve : false};
+    $scope.labels = ["January", "February", "March", "April", "May", "June", "July"];
+    $scope.series = ['Series A', 'Series B'];
+    $scope.data = [
+        [65, 59, 80, 81, 56, 55, 40],
+        [28, 48, 40, 19, 86, 27, 90]
+    ];
+    $scope.onClick = function (points, evt) {
+        console.log(points, evt);
+    };
+    console.log("Chart for bucket ", $scope.b.name);
+
 
 } ]);
