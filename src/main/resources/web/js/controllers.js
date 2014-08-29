@@ -95,3 +95,11 @@ myAppControlers.controller('buckets', ['$scope', 'Bucket', function ($scope, Buc
 myAppControlers.controller('SettingsCtrl', ['$scope', function ($scope) {
 
 } ]);
+
+myAppControlers.controller('BucketButtonCtrl', ['$scope', 'ActiveGraphs', function ($scope, ActiveGraphs) {
+    $scope.isActive=false;
+    $scope.$on('ActiveGraphsChangedEvent', function () {
+        var showedBuckets = ActiveGraphs.getBuckets();
+        $scope.isActive = _.contains(showedBuckets, $scope.bucket)
+    });
+} ]);

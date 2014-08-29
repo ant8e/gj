@@ -1,10 +1,11 @@
 <div class="col-sm-3 col-md-2 sidebar">
-    <ul class="nav nav-sidebar nav-pils" ng-repeat="b in buckets | orderBy :'name'">
-        <li><p class="navbar-text"> {{b.name}}</p>
-            <button type="button" class="btn btn-default btn-xs navbar-btn" ng-click="ActiveGraphs.addBucket(b)" >
+    <ul class="nav nav-sidebar nav-pils" ng-repeat="bucket in buckets | orderBy :'name'">
+        <li ng-controller="BucketButtonCtrl">
+            <p class="navbar-text"> {{bucket.name}}</p>
+            <button  type="button" class="btn btn-default btn-xs navbar-btn" ng-disabled="isActive" ng-click="ActiveGraphs.addBucket(bucket)" >
                 <span class="glyphicon glyphicon-plus"></span>
             </button>
-            <button type="button" class="btn btn-default btn-xs navbar-btn" ng-click="ActiveGraphs.removeBucket(b)" >
+            <button type="button" class="btn btn-default btn-xs navbar-btn"  ng-disabled="! isActive" ng-click="ActiveGraphs.removeBucket(bucket)" >
                 <span class="glyphicon glyphicon-minus"></span>
             </button>
         </li>
