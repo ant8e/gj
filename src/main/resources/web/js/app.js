@@ -8,7 +8,7 @@ angular.module('gj', [
     'myApp.services',
     'myApp.directives',
     'myApp.controllers',
-    'highcharts-ng'
+    'angular-rickshaw'
 ]).
     config(['$routeProvider', '$locationProvider', function ($routeProvider, $locationProvider) {
         $routeProvider.when('/dashboard', {templateUrl: 'partials/dashboard.html', controller: 'DashboardCtrl'});

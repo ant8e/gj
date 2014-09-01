@@ -15,56 +15,6 @@ myAppControlers.controller('MainCtrl', ['$scope', '$location', '$route', functio
 
 myAppControlers.controller('DashboardCtrl', ['$scope', 'Bucket', 'MetricSource', 'ActiveGraphs', function ($scope, Bucket, metricSource, ActiveGraphs) {
 
-    $scope.values = [];
-
-    $scope.chartSeries = [
-        {"name": "Plot", "data": []}
-
-    ];
-
-    $scope.chartConfig = {
-        options: {
-            chart: {
-                type: 'area',
-                animation: Highcharts.svg,
-                zoomType: 'x'
-            },
-            plotOptions: {
-                area: {
-                    fillColor: {
-                        linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1},
-                        stops: [
-                            [0, Highcharts.getOptions().colors[0]],
-                            [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
-                        ]
-                    },
-                    marker: {
-                        enabled: false
-//                        radius: 2
-                    },
-                    lineWidth: 1,
-                    states: {
-                        hover: {
-                            lineWidth: 1
-                        }
-                    },
-                    threshold: null
-                }
-            }
-        },
-        series: $scope.chartSeries,
-        title: {
-            text: ''
-        },
-        xAxis: {
-            type: 'datetime',
-            tickPixelInterval: 150
-        },
-        credits: {
-            enabled: true
-        },
-        loading: false};
-
 
     $scope.subscribe = function (b) {
         metricSource.subscribe($scope, b)
@@ -97,9 +47,68 @@ myAppControlers.controller('SettingsCtrl', ['$scope', function ($scope) {
 } ]);
 
 myAppControlers.controller('BucketButtonCtrl', ['$scope', 'ActiveGraphs', function ($scope, ActiveGraphs) {
-    $scope.isActive=false;
+    $scope.isActive = false;
     $scope.$on('ActiveGraphsChangedEvent', function () {
         var showedBuckets = ActiveGraphs.getBuckets();
         $scope.isActive = _.contains(showedBuckets, $scope.bucket)
     });
 } ]);
+
+
+myAppControlers.controller('ChartCtrl', ['$scope', 'MetricSource', function ($scope, metricSource) {
+
+    $scope.options = {
+        renderer: 'area', stroke: true,
+        preserve: true
+    };
+    $scope.features = {
+        palette: 'colorwheel',
+        legend: {
+            toggle: true,
+            highlight: true
+        },
+        xAxis: {
+            timeUnit: {
+                ticksTreatment: 'glow',
+                timeFixture: new Rickshaw.Fixtures.Time.Local()
+            }
+        },
+        hover: {
+            xFormatter: function (x) {
+                return new Date(x * 1000).toString();
+            }
+        }
+    };
+
+    $scope.series = [
+        {
+            name: $scope.bucket.name,
+            data: [
+//                {x: 0, y: 230},
+//                {x: 1, y: 1500},
+//                {x: 2, y: 790},
+//                {x: 3, y: 310},
+//                {x: 4, y: 600}
+            ]
+        }
+    ];
+
+
+    metricSource.subscribe($scope, $scope.bucket);
+
+    function extracted(metric) {
+        var item = JSON.parse(metric.data);
+        if (item.metric == $scope.bucket.name) {
+            $scope.$apply(function (scope) {
+                scope.series[0].data.push({y: item.value, x: item.ts / 1000});
+            });
+
+        }
+    }
+
+    $scope.$on('metricvalue', function (event, metric) {
+        extracted(metric);
+    });
+
+} ])
+;

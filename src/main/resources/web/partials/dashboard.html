@@ -2,10 +2,12 @@
     <ul class="nav nav-sidebar nav-pils" ng-repeat="bucket in buckets | orderBy :'name'">
         <li ng-controller="BucketButtonCtrl">
             <p class="navbar-text"> {{bucket.name}}</p>
-            <button  type="button" class="btn btn-default btn-xs navbar-btn" ng-disabled="isActive" ng-click="ActiveGraphs.addBucket(bucket)" >
+            <button type="button" class="btn btn-default btn-xs navbar-btn" ng-disabled="isActive"
+                    ng-click="ActiveGraphs.addBucket(bucket)">
                 <span class="glyphicon glyphicon-plus"></span>
             </button>
-            <button type="button" class="btn btn-default btn-xs navbar-btn"  ng-disabled="! isActive" ng-click="ActiveGraphs.removeBucket(bucket)" >
+            <button type="button" class="btn btn-default btn-xs navbar-btn" ng-disabled="! isActive"
+                    ng-click="ActiveGraphs.removeBucket(bucket)">
                 <span class="glyphicon glyphicon-minus"></span>
             </button>
         </li>
@@ -18,11 +20,10 @@
 
 
     <div class="row placeholders">
-        <div ng-repeat="b in showedBuckets" class="col-xs-9 col-sm-6 placeholder">
-            <highchart id="chart1" config="chartConfig" bucket="b" subscribe="subscribe"/>
-            <button type="button" class="btn btn-default btn-xs" ng-click="ActiveGraphs.removeBucketByIndex($index)">
-                <span class="glyphicon glyphicon-remove"></span>
-            </button>
+        <div ng-repeat="bucket in showedBuckets" class="col-xs-9 col-sm-6 placeholder">
+            <span ng-controller="ChartCtrl">
+                <rickshaw rickshaw-options="options" rickshaw-features="features" rickshaw-series="series"></rickshaw>
+             </span>
         </div>
 
     </div>
