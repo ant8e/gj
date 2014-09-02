@@ -38,7 +38,6 @@ myAppServices.factory('MetricSource', function () {
         unsubscribe: function ($scope, b) {
             buckets[b.name] = false;
             this.renew($scope);
-
         }
     };
 });
