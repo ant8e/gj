@@ -11,10 +11,10 @@ object Dependencies {
     //    "spray on the edge" at "http://nightlies.spray.io",
     "sonatype-snapshots" at "https://oss.sonatype.org/content/groups/public")
 
-  val spray = Seq("io.spray" % "spray-can" % sprayVersion,
-    "io.spray" % "spray-routing" % sprayVersion,
-    "io.spray" % "spray-caching" % sprayVersion,
-    "io.spray" % "spray-testkit" % sprayVersion % "test",
+  val spray = Seq("io.spray" %% "spray-can" % sprayVersion  exclude("com.chuusai", "shapeless"),
+    "io.spray" %% "spray-routing" % sprayVersion  exclude("com.chuusai", "shapeless_2.10"),
+    "io.spray" %% "spray-caching" % sprayVersion  exclude("com.chuusai", "shapeless"),
+    "io.spray" %% "spray-testkit" % sprayVersion % "test"  exclude("com.chuusai", "shapeless"),
     "io.spray" %% "spray-json" % "1.2.6")
 
 

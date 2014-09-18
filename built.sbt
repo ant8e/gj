@@ -18,6 +18,8 @@ resolvers ++= Dependencies.resolvers
 
 libraryDependencies ++= Dependencies.deps
 
+libraryDependencies +=  "org.typelevel" %% "scodec-core" % "1.3.0"
+
 scalariformSettings
 
 dockerSettings
