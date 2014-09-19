@@ -17,8 +17,13 @@
 package gj
 
 import gj.metric.{ SimpleBucket, LongCounter, _ }
-import org.scalatest.FunSpec
+import org.scalatest.{ Matchers, FunSpec }
+import scodec.Codec
+import scodec.bits.BitVector
+import storage.TempFuDB.Record
 import storage.{ MemoryMetricStore, MetricStore }
+
+import scalaz.{ \/-, \/ }
 
 /**
  *
@@ -50,5 +55,19 @@ class MemoryStoreSpec extends FunSpec with StorageSpec {
       override lazy val metric: LongCounter = new LongCounter(SimpleBucket("test.bucket"))
     }
     it should behave like storage[LongCounter](store, 42L)
+  }
+}
+
+class TempFuCodecSpec extends FunSpec with Matchers {
+  import storage.TempFuDB.TempFuCodec._
+  describe("the codec ") {
+    it("should encode records") {
+      val encode: \/[String, BitVector] = Codec.encode(Record(0, 0))
+      encode shouldBe ('right)
+      val vector: BitVector = encode.toOption.get
+
+      vector shouldBe BitVector.fromHex("0000000000000000").get
+
+    }
   }
 }
