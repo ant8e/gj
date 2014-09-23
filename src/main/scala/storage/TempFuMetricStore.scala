@@ -16,11 +16,18 @@
 
 package storage
 
-import java.io.File
+import java.io.{ RandomAccessFile, File }
+import java.nio.MappedByteBuffer
+import java.nio.channels.FileChannel
 
 import gj.metric._
+import scodec.Codec
+import scodec.bits.BitVector
+import storage.TempFuDB.Header
 
+import scala.concurrent.duration._
 import scala.concurrent.duration.Duration
+import scala.util.Try
 
 /**
  * In memory metric store
@@ -39,30 +46,71 @@ trait TempFuMetricStore[T <: Metric] extends MetricStore[T] {
 
 }
 
-// Tempus Fugit time series database
+/**
+ * Support the Tempus Fugit file format
+ *
+ * Warning : Not ThreadSafe
+ */
 class TempFuDB(file: File) {
+
+  private val channel: FileChannel = new RandomAccessFile(file, "rw").getChannel
+  private val bitVector: BitVector = BitVector.fromMmap(channel)
+
+  import TempFuDB.TempFuCodec._
+
+  def readHeader = headerCodec.decodeValidValue(bitVector.take(headerByteLength * 8))
+  def writeHeader(h: Header): Unit = {
+    val headerBits: BitVector = headerCodec.encodeValid(h)
+    channel.write(headerBits.toByteBuffer, 0)
+  }
+
+  def close() = channel.close()
 
 }
 
 object TempFuDB {
+
   def apply(file: File) = new TempFuDB(file)
 
-  def newdb(file: File, retention: Duration) = {
+  def newdb(file: File, retention: Duration): Try[TempFuDB] = Try {
 
+    val f = new RandomAccessFile(file, "rw")
+    f.setLength(TempFuCodec.headerByteLength + retention.toSeconds * TempFuCodec.recordByteLength)
+    f.close()
+
+    val dB: TempFuDB = TempFuDB(file)
+    dB.writeHeader(Header(retention, 1.second, 0))
+    dB
   }
 
   case class Record(timeStamp: Long, value: Long)
 
-  case class Header(retention: Duration, offset: Long)
+  case class Header(retention: Duration, interval: Duration, offset: Long)
 
   object TempFuCodec {
 
     import scodec.codecs._
 
-    implicit val record = {
+    implicit val recordCodec = {
       ("time_stamp" | uint32) ::
         ("value" | uint32)
     }.as[Record]
+
+    val recordByteLength: Long = recordCodec.encode(Record(0, 0)).toOption.get.size
+
+    val durationCodec = Codec[Duration](
+      (d: Duration) ⇒ uint32.encode(d.toSeconds),
+      (bv: BitVector) ⇒ uint32.decode(bv).map {
+        case (rest, l) ⇒ (rest, Duration(l, SECONDS))
+      })
+
+    implicit val headerCodec = {
+      ("retention" | durationCodec) ::
+        ("interval" | durationCodec) ::
+        ("offset" | uint32)
+    }.as[Header]
+
+    val headerByteLength: Long = headerCodec.encode(Header(1.second, 1.second, 0)).toOption.get.size / 8
   }
 
 }

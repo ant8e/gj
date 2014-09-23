@@ -21,8 +21,9 @@ import org.scalatest.{ Matchers, FunSpec }
 import scodec.Codec
 import scodec.bits.BitVector
 import storage.TempFuDB.Record
-import storage.{ MemoryMetricStore, MetricStore }
+import storage.{ TempFuDB, MemoryMetricStore, MetricStore }
 
+import scala.util.Try
 import scalaz.{ \/-, \/ }
 
 /**
@@ -59,6 +60,7 @@ class MemoryStoreSpec extends FunSpec with StorageSpec {
 }
 
 class TempFuCodecSpec extends FunSpec with Matchers {
+
   import storage.TempFuDB.TempFuCodec._
 
   describe("A Record codec") {
@@ -71,16 +73,55 @@ class TempFuCodecSpec extends FunSpec with Matchers {
     }
 
     it("should decode records") {
-      val encode: \/[String, (BitVector, Record)] = Codec.decode(BitVector.fromHex("0000000000000000").get)
-      encode shouldBe ('right)
+      val dec: \/[String, (BitVector, Record)] = Codec.decode(BitVector.fromHex("0000000000000000").get)
+      dec shouldBe ('right)
 
-      val (b1, r1) = encode.toOption.get
+      val (b1, r1) = dec.toOption.get
       b1 shouldBe BitVector.empty
       r1 shouldBe Record(0, 0)
 
-      val (b2, r2) = Codec.decode(BitVector.fromHex("0000000100000002").get).toOption.get
+      val (b2, r2) = Codec.decode[Record](BitVector.fromHex("0000000100000002").get).toOption.get
       b2 shouldBe BitVector.empty
       r2 shouldBe Record(1, 2)
     }
+  }
+}
+
+class TempFuDBSpec extends FunSpec with Matchers {
+
+  import java.io.File
+  import java.io.RandomAccessFile
+  import storage.TempFuDB.TempFuCodec.headerCodec
+
+  describe("A TempfuDB") {
+
+    it("should be created") {
+
+      import scala.concurrent.duration._
+      val f = new File("test1.db")
+      val db: Try[TempFuDB] = TempFuDB.newdb(f, 1.day)
+
+      db.isSuccess shouldBe true
+
+      for (d ← db) {
+        d.close()
+        val header = headerCodec.decodeValidValue(BitVector.fromChannel(new RandomAccessFile(f, "r").getChannel))
+        new RandomAccessFile(f, "r").close()
+        f.delete()
+        header shouldBe TempFuDB.Header(1.day, 1.second, 0)
+
+      }
+
+    }
+    it("should store records") {
+      pending
+    }
+    it("should retrieve records") {
+      pending
+    }
+    it("should roll overs records") {
+      pending
+    }
+
   }
 }
