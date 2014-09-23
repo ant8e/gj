@@ -39,7 +39,6 @@ trait TempFuMetricStore[T <: Metric] extends MetricStore[T] {
 
 }
 
-
 // Tempus Fugit time series database
 class TempFuDB(file: File) {
 

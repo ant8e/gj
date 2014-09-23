@@ -60,14 +60,27 @@ class MemoryStoreSpec extends FunSpec with StorageSpec {
 
 class TempFuCodecSpec extends FunSpec with Matchers {
   import storage.TempFuDB.TempFuCodec._
-  describe("the codec ") {
+
+  describe("A Record codec") {
+
     it("should encode records") {
       val encode: \/[String, BitVector] = Codec.encode(Record(0, 0))
       encode shouldBe ('right)
-      val vector: BitVector = encode.toOption.get
+      encode.toOption.get shouldBe BitVector.fromHex("0000000000000000").get
+      Codec.encode(Record(1, 2)).toOption.get shouldBe BitVector.fromHex("0000000100000002").get
+    }
 
-      vector shouldBe BitVector.fromHex("0000000000000000").get
+    it("should decode records") {
+      val encode: \/[String, (BitVector, Record)] = Codec.decode(BitVector.fromHex("0000000000000000").get)
+      encode shouldBe ('right)
 
+      val (b1, r1) = encode.toOption.get
+      b1 shouldBe BitVector.empty
+      r1 shouldBe Record(0, 0)
+
+      val (b2, r2) = Codec.decode(BitVector.fromHex("0000000100000002").get).toOption.get
+      b2 shouldBe BitVector.empty
+      r2 shouldBe Record(1, 2)
     }
   }
 }
