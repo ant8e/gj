@@ -48,7 +48,6 @@ class TempFuDBSpec extends FunSpec with Matchers {
 
     }
     it("should store records") {
-      pending
       withRandomFile { f ⇒
         val db = TempFuDB.newdb(f, 1.day)
         db.isSuccess shouldBe true
@@ -56,10 +55,7 @@ class TempFuDBSpec extends FunSpec with Matchers {
         for (d ← db) {
           d.push(ts, 10)
         }
-
       }
-
-      pending
     }
     it("should retrieve records") {
       pending
@@ -101,21 +97,21 @@ class TempFuCodecSpec extends FunSpec with Matchers {
 
       val encode: \/[String, BitVector] = recordCodec.encode(Record(0, 0))
       encode shouldBe 'right
-      encode.toOption.get shouldBe hex"0000000000000000".toBitVector
-      recordCodec.encodeValid(Record(1, 2)) shouldBe hex"0000000100000002".toBitVector
+      encode.toOption.get shouldBe hex"00000000000000000000000000000000".toBitVector
+      recordCodec.encodeValid(Record(1, 2)) shouldBe hex"00000000000000010000000000000002".toBitVector
     }
 
     it("should decode records") {
 
       import scalaz.\/
-      val dec: \/[String, (BitVector, Record)] = recordCodec.decode(hex"0000000000000000".toBitVector)
+      val dec: \/[String, (BitVector, Record)] = recordCodec.decode(hex"00000000000000000000000000000000".toBitVector)
       dec shouldBe 'right
 
       val (b1, r1) = dec.toOption.get
       b1 shouldBe BitVector.empty
       r1 shouldBe Record(0, 0)
 
-      val (b2, r2) = recordCodec.decode(hex"0000000100000002".toBitVector).toOption.get
+      val (b2, r2) = recordCodec.decode(hex"00000000000000010000000000000002".toBitVector).toOption.get
       b2 shouldBe BitVector.empty
       r2 shouldBe Record(1, 2)
     }

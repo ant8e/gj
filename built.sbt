@@ -26,6 +26,7 @@ dockerSettings
 
 ScalariformKeys.preferences := FormattingPreferences()
   .setPreference(AlignParameters, true)
+  .setPreference(AlignSingleLineCaseStatements, true)
   .setPreference(RewriteArrowSymbols, true)
   .setPreference(PreserveDanglingCloseParenthesis, false)
 

@@ -32,7 +32,7 @@ import scalaz.{ \/-, \/ }
 trait StorageSpec {
   self: FunSpec ⇒
 
-  def storage[T <: Metric](s: ⇒ MetricStore[T], value: T#Value) = {
+  def storage[A <: Metric](s: ⇒ MetricStore[A], value: A#Value) = {
     it("should store value ") {
       s.store(0, value)
     }
