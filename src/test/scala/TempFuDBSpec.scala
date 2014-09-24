@@ -19,8 +19,9 @@ import org.scalatest.{ Matchers, FunSpec }
 class TempFuDBSpec extends FunSpec with Matchers {
 
   import java.io.{ File, RandomAccessFile }
+  import java.util.UUID
 
-  import storage.TempFuDB.TempFuCodec.headerCodec
+  import storage.TempFuDB.TempFuCodec._
 
   import storage.TempFuDB
   import scala.concurrent.duration._
@@ -30,23 +31,33 @@ class TempFuDBSpec extends FunSpec with Matchers {
   describe("A TempfuDB") {
 
     it("should be created") {
+      withRandomFile { f ⇒
+        val db: Try[TempFuDB] = TempFuDB.newdb(f, 1.day)
 
-      val f = new File("test1.db")
-      val db: Try[TempFuDB] = TempFuDB.newdb(f, 1.day)
+        db.isSuccess shouldBe true
 
-      db.isSuccess shouldBe true
-
-      for (d ← db) {
-        d.close()
-        val header = headerCodec.decodeValidValue(BitVector.fromChannel(new RandomAccessFile(f, "r").getChannel))
-        new RandomAccessFile(f, "r").close()
-        f.delete()
-        header shouldBe TempFuDB.Header(1.day, 1.second, 0)
-
+        for (d ← db) {
+          d.close()
+          val file: RandomAccessFile = new RandomAccessFile(f, "r")
+          file.length() shouldBe headerByteLength + (1.day.toSeconds * recordByteLength)
+          val header = headerCodec.decodeValidValue(BitVector.fromChannel(file.getChannel))
+          file.close()
+          header shouldBe TempFuDB.Header(1.day, 1.second, 0)
+        }
       }
 
     }
     it("should store records") {
+      withRandomFile { f ⇒
+        val db = TempFuDB.newdb(f, 1.day)
+        db.isSuccess shouldBe true
+        val ts: Long = System.currentTimeMillis()
+        for (d ← db) {
+          d.push(ts, 10)
+        }
+
+      }
+
       pending
     }
     it("should retrieve records") {
@@ -57,6 +68,22 @@ class TempFuDBSpec extends FunSpec with Matchers {
     }
 
   }
+
+  def withFile(file: String)(expr: ⇒ File ⇒ Unit): Unit = {
+    import scala.util.{ Failure, Success }
+    Try {
+      new File(file)
+    } match {
+      case Success(f) ⇒
+        import java.nio.file.Files
+        expr(f)
+        Files.delete(f.toPath)
+      //   if (!f.delete()) fail("cannot delete file")
+      case Failure(e) ⇒ fail(e)
+    }
+  }
+
+  def withRandomFile = withFile(UUID.randomUUID().toString + ".db") _
 }
 
 class TempFuCodecSpec extends FunSpec with Matchers {

@@ -53,18 +53,35 @@ trait TempFuMetricStore[T <: Metric] extends MetricStore[T] {
  */
 class TempFuDB(file: File) {
 
-  private val channel: FileChannel = new RandomAccessFile(file, "rw").getChannel
+  import TempFuDB.TempFuCodec._
+  import storage.TempFuDB.Record
+
+  private val raf = new RandomAccessFile(file, "rw")
+  private val channel: FileChannel = raf.getChannel
   private val bitVector: BitVector = BitVector.fromMmap(channel)
 
-  import TempFuDB.TempFuCodec._
+  private var currenHeader = readHeader
+  private var tsAtCurrentOffset = readRecordAt(currenHeader.offset).timeStamp
 
-  def readHeader = headerCodec.decodeValidValue(bitVector.take(headerByteLength * 8))
-  def writeHeader(h: Header): Unit = {
+  private def readHeader = headerCodec.decodeValidValue(bitVector.take(headerByteLength * 8))
+
+  private def readRecordAt(offset:Long): Record= {
+    channel.position(headerByteLength+offset*recordByteLength)
+    recordCodec.decodeValidValue(BitVector.fromChannel(channel).take(recordByteLength * 8))
+  }
+  private def writeHeader(h: Header): Unit = {
     val headerBits: BitVector = headerCodec.encodeValid(h)
     channel.write(headerBits.toByteBuffer, 0)
   }
+  private var header
+  def push(l: Long, i: Long) = {
+    val writeOffset = headerByteLength + recordByteLength
+  }
 
-  def close() = channel.close()
+  def close() = {
+    channel.close()
+    raf.close()
+  }
 
 }
 
