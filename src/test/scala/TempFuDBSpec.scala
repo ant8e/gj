@@ -48,6 +48,7 @@ class TempFuDBSpec extends FunSpec with Matchers {
 
     }
     it("should store records") {
+      pending
       withRandomFile { f ⇒
         val db = TempFuDB.newdb(f, 1.day)
         db.isSuccess shouldBe true

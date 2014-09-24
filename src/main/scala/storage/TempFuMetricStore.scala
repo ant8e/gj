@@ -1,18 +1,18 @@
 /*
- * Copyright © 2014 Antoine Comte
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Copyright © 2014 Antoine Comte
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 
 package storage
 
@@ -51,7 +51,7 @@ trait TempFuMetricStore[T <: Metric] extends MetricStore[T] {
  *
  * Warning : Not ThreadSafe
  */
-class TempFuDB(file: File) {
+final class TempFuDB(file: File) {
 
   import TempFuDB.TempFuCodec._
   import storage.TempFuDB.Record
@@ -60,22 +60,43 @@ class TempFuDB(file: File) {
   private val channel: FileChannel = raf.getChannel
   private val bitVector: BitVector = BitVector.fromMmap(channel)
 
-  private var currenHeader = readHeader
-  private var tsAtCurrentOffset = readRecordAt(currenHeader.offset).timeStamp
+  private var currentHeader = readHeader
+  private var tsAtCurrentOffset = readRecordAt(currentHeader.offset) map {
+    _.timeStamp
+  }
 
   private def readHeader = headerCodec.decodeValidValue(bitVector.take(headerByteLength * 8))
 
-  private def readRecordAt(offset:Long): Record= {
-    channel.position(headerByteLength+offset*recordByteLength)
-    recordCodec.decodeValidValue(BitVector.fromChannel(channel).take(recordByteLength * 8))
+  private def readRecordAt(offset: Long): Option[Record] = {
+    channel.position(recordPositionInByte(offset))
+    val t = recordCodec.decodeValidValue(BitVector.fromChannel(channel).take(recordByteLength * 8))
+    // Todo refactor codec to handle this case
+    if (t.timeStamp > 0)
+      Some(t)
+    else
+      None
   }
+
+  private def recordPositionInByte(offset: Long): Long = headerByteLength + offset * recordByteLength
+
   private def writeHeader(h: Header): Unit = {
     val headerBits: BitVector = headerCodec.encodeValid(h)
     channel.write(headerBits.toByteBuffer, 0)
+    currentHeader = h
   }
-  private var header
-  def push(l: Long, i: Long) = {
-    val writeOffset = headerByteLength + recordByteLength
+
+  private def writeRecordAt(r: Record, offset: Long): Unit = {
+    val headerBits: BitVector = recordCodec.encodeValid(r)
+    channel.write(headerBits.toByteBuffer, recordPositionInByte(offset))
+  }
+
+  def push(ts: Long, v: Long) = {
+    val writepos = tsAtCurrentOffset.map { ts0 ⇒ (ts - ts0) / currentHeader.interval.toMillis }
+    writepos match {
+      case Some(x) if x >= 0 ⇒ writeRecordAt(Record(ts, v), x)
+      case None ⇒ writeRecordAt(Record(ts, v), 0)
+      case _ ⇒
+    }
   }
 
   def close() = {
