@@ -88,7 +88,7 @@ final class TempFuDB(file: File) {
 
   import TempFuDB.TempFuCodec._
   import scodec.bits.BitVector
-  import storage.TempFuDB.{ Header, Record }
+  import storage.TempFuDB.{Header, Record}
 
   private val raf = new RandomAccessFile(file, "rw")
   private val channel: FileChannel = raf.getChannel
@@ -117,15 +117,23 @@ final class TempFuDB(file: File) {
       None
   }
 
-  private def writeRecordAt(r: Record, offset: Long): Unit = {
+  def readRecord(ts: Long): Option[Record] = {
+    val readPos = tsAtCurrentOffset.map { ts0 ⇒ (ts - ts0) / currentHeader.interval.toMillis}
+    //TODO handle cases where the ts fall outside of the file range
+    for (p <- readPos;
+      r <- readRecordAt(p))
+    yield r
+  }
+
+  private def writeRecordAt(r: Record, recordPos: Long): Unit = {
     val headerBits: BitVector = recordCodec.encodeValid(r)
-    channel.write(headerBits.toByteBuffer, recordPositionInByte(offset))
+    channel.write(headerBits.toByteBuffer, recordPositionInByte(recordPos))
   }
 
   private def recordPositionInByte(offset: Long): Long = headerByteLength + offset * recordByteLength
 
   def push(ts: Long, v: Long) = {
-    val writepos = tsAtCurrentOffset.map { ts0 ⇒ (ts - ts0) / currentHeader.interval.toMillis }
+    val writepos = tsAtCurrentOffset.map { ts0 ⇒ (ts - ts0) / currentHeader.interval.toMillis}
     writepos match {
       case Some(x) if x >= 0 ⇒
         writeRecordAt(Record(ts, v), x)

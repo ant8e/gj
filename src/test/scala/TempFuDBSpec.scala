@@ -15,6 +15,7 @@
  */
 
 import org.scalatest.{ Matchers, FunSpec }
+import storage.TempFuDB.Record
 
 class TempFuDBSpec extends FunSpec with Matchers {
 
@@ -57,7 +58,19 @@ class TempFuDBSpec extends FunSpec with Matchers {
         }
       }
     }
-    it("should retrieve records") {
+    it("should retrieve records at specific timestamp") {
+      withRandomFile { f ⇒
+        val db = TempFuDB.newdb(f, 1.day)
+        db.isSuccess shouldBe true
+        val ts: Long = System.currentTimeMillis()
+        for (d ← db) {
+          d.push(ts, 10)
+          val record: Option[Record] = d.readRecord(ts)
+          record shouldBe Some(Record(ts,10))
+        }
+      }
+    }
+    it("should retrieve records for a timestamp range") {
       pending
     }
     it("should roll overs records") {
