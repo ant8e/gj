@@ -9,7 +9,7 @@ name := "graphjunkie"
 
 version := "0.1-SNAPSHOT"
 
-scalaVersion := "2.10.4"
+scalaVersion := "2.11.6"
 
 
 scalacOptions += "-feature"
@@ -17,35 +17,34 @@ scalacOptions += "-feature"
 //
 // Dependencies
 //
-val sprayVersion = "1.3.1"
-val akkaVersion = "2.3.3"
 
+libraryDependencies ++= {
+  val sprayVersion = "1.3.3"
+  val akkaVersion = "2.3.10"
+    Seq(
+    "io.spray" %% "spray-can" % sprayVersion,
+    "io.spray" %% "spray-routing" % sprayVersion,
+    "io.spray" %% "spray-caching" % sprayVersion,
+    "io.spray" %% "spray-testkit" % sprayVersion % "test",
+    "io.spray" %% "spray-json" % "1.3.1",
+    "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+    "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test",
+    "org.scalatest" %% "scalatest" % "2.2.1" % "test",
+    "org.webjars" % "jquery" % "1.11.1",
+    "org.webjars" % "bootstrap" % "3.1.1-2",
+    "org.webjars" % "underscorejs" % "1.6.0-3",
+    "org.webjars" % "rickshaw" % "1.5.0",
+    "org.webjars" % "react" % "0.11.1",
+    "org.webjars" % "font-awesome" % "4.2.0"
+  )
+}
 
-val spray = Seq("io.spray" % "spray-can" % sprayVersion,
-  "io.spray" % "spray-routing" % sprayVersion,
-  "io.spray" % "spray-caching" % sprayVersion,
-  "io.spray" % "spray-testkit" % sprayVersion % "test",
-  "io.spray" %% "spray-json" % "1.2.6")
-val akka = Seq("com.typesafe.akka" %% "akka-actor" % akkaVersion,
-  "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test")
-val scalaTest = "org.scalatest" %% "scalatest" % "2.2.1" % "test"
-val byteCask = "com.github.bytecask" %% "bytecask" % "1.0-SNAPSHOT"
-val webJars = Seq(
-  "org.webjars" % "jquery" % "1.11.1",
-  "org.webjars" % "bootstrap" % "3.1.1-2",
-  "org.webjars" % "underscorejs" % "1.6.0-3",
-  "org.webjars" % "rickshaw" % "1.5.0",
-  "org.webjars" % "react" % "0.11.1",
-  "org.webjars" % "font-awesome" % "4.2.0"
-)
+//resolvers ++= Seq(
+// "Typesafe repo" at "http://repo.typesafe.com/typesafe/releases/",
+// "spray repo" at "http://repo.spray.io/",
+//    "spray on the edge" at "http://nightlies.spray.io",
+//  "sonatype-snapshots" at "https://oss.sonatype.org/content/groups/public")
 
-resolvers ++= Seq(
- // "Typesafe repo" at "http://repo.typesafe.com/typesafe/releases/",
- // "spray repo" at "http://repo.spray.io/",
-  //    "spray on the edge" at "http://nightlies.spray.io",
-  "sonatype-snapshots" at "https://oss.sonatype.org/content/groups/public")
-
-libraryDependencies ++= spray ++ webJars ++ akka ++ Seq( byteCask, scalaTest )
 
 scalariformSettings
 

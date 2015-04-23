@@ -211,23 +211,20 @@ trait UIService extends HttpService with SprayJsonSupport {
    */
   def staticRoutes: Route = get {
     // Static content can live forever in cache
-    import CachingDirectives._
-    cache(routeCache()) {
-      // Serving webjars from the wj prefix
-      pathPrefix("wj") {
-        //Allow clients to cache js librairies for one year
-        respondWithHeader(`Cache-Control`(`max-age`(365.days.toSeconds))) {
-          getFromResourceDirectory("META-INF/resources/webjars")
-        }
-      } ~
-        //Allow clients to cache js/css/html for one week
-        respondWithHeader(`Cache-Control`(`max-age`(7.days.toSeconds))) {
-          // Then anything form the web directory
-          getFromResourceDirectory("web") ~
-            // Finaly, fallback to the index
-            getFromResource("web/index.html")
-        }
-    }
+    // Serving webjars from the wj prefix
+    pathPrefix("wj") {
+      //Allow clients to cache js librairies for one year
+      respondWithHeader(`Cache-Control`(`max-age`(365.days.toSeconds))) {
+        getFromResourceDirectory("META-INF/resources/webjars")
+      }
+    } ~
+      //Allow clients to cache js/css/html for one week
+      respondWithHeader(`Cache-Control`(`max-age`(7.days.toSeconds))) {
+        // Then anything form the web directory
+        getFromResourceDirectory("web") ~
+          // Finaly, fallback to the index
+          getFromResource("web/index.html")
+      }
   }
 
   def routes: Route = compressResponseIfRequested() {
