@@ -56,7 +56,8 @@ commonSettings,
     ),
     jsDependencies ++= Seq(
       "org.webjars" % "react" % "0.13.1" / "react-with-addons.js" commonJSName "React",
-      "org.webjars" % "rickshaw" % "1.5.0" / "rickshaw.min.js",
+      "org.webjars" % "rickshaw" % "1.5.0" / "rickshaw.min.js" dependsOn "d3.min.js",
+      "org.webjars" % "d3js" % "3.5.5-1" / "d3.min.js",
       RuntimeDOM % "test"))
   .enablePlugins(ScalaJSPlugin)
 
