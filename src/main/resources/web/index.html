@@ -8,24 +8,24 @@
     <link rel="stylesheet" href="wj/bootstrap/3.3.4/css/bootstrap.min.css">
     <link rel="stylesheet" href="css/app.css"/>
     <link rel="shortcut icon" href="gj.ico"/>
-    <link rel="stylesheet" href="wj/rickshaw/1.5.0/rickshaw.min.css">
-    <link rel="stylesheet" href="wj/font-awesome/4.2.0/css/font-awesome.min.css">
 
     <!--JavaScript-->
     <script src="wj/jquery/1.11.1/jquery.min.js"></script>
-    <script src="wj/underscorejs/1.6.0/underscore-min.js"></script>
-    <script src="wj/bootstrap/3.3.4/js/bootstrap.min.js"></script>
-    <script src="wj/d3js/3.1.4/d3.min.js"></script>
-    <script src="wj/rickshaw/1.5.0/rickshaw.min.js"></script>
-    <script src="wj/react/0.11.1/react.js"></script>
-    <script src="wj/react/0.11.1/JSXTransformer.js"></script>
+    <script src="ui-fastopt.js"></script>
+    <script src="ui-jsdeps.js"></script>
+    <script>
+        $(function() {
+             gj.ui.UiApp().main ("content");
+        })
+    </script>
+    <!--<script src="wj/jquery/1.11.1/jquery.min.js"></script>-->
+    <!--<script src="wj/bootstrap/3.3.4/js/bootstrap.min.js"></script>-->
 
 </head>
 <body>
 
 <div id="gr"></div>
-<div id="content"></div>
-<script type="text/jsx" src="js/app.js"/>
+<div id="ui-app"></div>
 
 
 </body>

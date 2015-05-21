@@ -220,10 +220,13 @@ trait UIService extends HttpService with SprayJsonSupport {
     } ~
       //Allow clients to cache js/css/html for one week
       respondWithHeader(`Cache-Control`(`max-age`(7.days.toSeconds))) {
-        // Then anything form the web directory
-        getFromResourceDirectory("web") ~
-          // Finaly, fallback to the index
+        pathEndOrSingleSlash {
           getFromResource("web/index.html")
+        } ~
+          // Then anything form the web and then the root directory
+          getFromResourceDirectory("web") ~
+          getFromResourceDirectory("")
+
       }
   }
 

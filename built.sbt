@@ -7,21 +7,22 @@ import sbtdocker.ImageName
 
 name := "graphjunkie"
 
-version := "0.1-SNAPSHOT"
-
-scalaVersion := "2.11.6"
-
-
+lazy val commonSettings = Seq(
+version := "0.1-SNAPSHOT",
+scalaVersion := "2.11.6",
 scalacOptions += "-feature"
+)
 
 //
 // Dependencies
 //
 
-libraryDependencies ++= {
+lazy val root = (project in file("."))
+.settings(commonSettings,
+  libraryDependencies ++= {
   val sprayVersion = "1.3.3"
   val akkaVersion = "2.3.10"
-    Seq(
+  Seq(
     "io.spray" %% "spray-can" % sprayVersion,
     "io.spray" %% "spray-routing" % sprayVersion,
     "io.spray" %% "spray-caching" % sprayVersion,
@@ -30,20 +31,34 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-actor" % akkaVersion,
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test",
     "org.scalatest" %% "scalatest" % "2.2.1" % "test",
-"org.webjars" % "bootstrap" % "3.3.4",
-  "org.webjars" % "jquery" % "1.11.1",
-    "org.webjars" % "underscorejs" % "1.6.0-3",
-    "org.webjars" % "rickshaw" % "1.5.0",
-    "org.webjars" % "react" % "0.11.1",
-    "org.webjars" % "font-awesome" % "4.2.0"
-  )
-}
+    "org.webjars" % "bootstrap" % "3.3.4",
+    "org.webjars" % "jquery" % "1.11.1",
+    "org.webjars" % "font-awesome" % "4.2.0")}
+  ).aggregate(ui)
+  .settings((resources in Compile) += (fastOptJS in (ui, Compile)).value.data)
+  .settings((resources in Compile) += (fullOptJS in (ui, Compile)).value.data)
+  .settings((resources in Compile) += (packageJSDependencies in (ui, Compile)).value)
 
-//resolvers ++= Seq(
-// "Typesafe repo" at "http://repo.typesafe.com/typesafe/releases/",
-// "spray repo" at "http://repo.spray.io/",
-//    "spray on the edge" at "http://nightlies.spray.io",
-//  "sonatype-snapshots" at "https://oss.sonatype.org/content/groups/public")
+
+
+lazy val ui = (project in file("ui"))
+  .settings(
+commonSettings,
+    persistLauncher := true,
+    persistLauncher in Test := false,
+    skip in packageJSDependencies := false,
+    libraryDependencies ++= Seq(
+      "org.scala-js" %%% "scalajs-dom" % "0.8.0",
+      "com.github.japgolly.scalajs-react" %%% "core" % "0.8.3",
+      "com.github.japgolly.scalajs-react" %%% "extra" % "0.8.3",
+      "com.lihaoyi" %%% "upickle" % "0.2.8"
+    ),
+    jsDependencies ++= Seq(
+      "org.webjars" % "react" % "0.13.1" / "react-with-addons.js" commonJSName "React",
+      "org.webjars" % "rickshaw" % "1.5.0" / "rickshaw.min.js",
+      RuntimeDOM % "test"))
+  .enablePlugins(ScalaJSPlugin)
+
 
 
 scalariformSettings
