@@ -8,5 +8,5 @@ import scala.scalajs.js.annotation.JSExport
  */
 object UiApp extends js.JSApp {
   @JSExport
-  override def main(): Unit = org.scalajs.dom.document.getElementById("ui-app").innerHTML = "<strong>It works!</strong>"
+  override def main(): Unit = org.scalajs.dom.document.getElementById("ui-app").innerHTML = "<strong>Eureka   It works!</strong>"
 }

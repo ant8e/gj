@@ -62,6 +62,8 @@ commonSettings,
 
 
 
+Revolver.settings
+mainClass in Revolver.reStart := Some("gj.Main")
 
 dockerSettings
 
