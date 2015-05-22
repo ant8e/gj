@@ -37,7 +37,7 @@ lazy val root = (project in file("."))
     "org.webjars" % "font-awesome" % "4.2.0")}
   ).aggregate(ui)
   .settings((resources in Compile) += (fastOptJS in (ui, Compile)).value.data)
-  .settings((resources in Compile) += (fullOptJS in (ui, Compile)).value.data)
+//  .settings((resources in Compile) += (fullOptJS in (ui, Compile)).value.data)
   .settings((resources in Compile) += (packageJSDependencies in (ui, Compile)).value)
 
 
@@ -56,8 +56,8 @@ commonSettings,
     ),
     jsDependencies ++= Seq(
       "org.webjars" % "react" % "0.13.1" / "react-with-addons.js" commonJSName "React",
-      "org.webjars" % "rickshaw" % "1.5.0" / "rickshaw.min.js" dependsOn "d3.min.js",
-      "org.webjars" % "d3js" % "3.5.5-1" / "d3.min.js",
+//      "org.webjars" % "rickshaw" % "1.5.0" / "rickshaw.min.js" dependsOn "d3.min.js",
+//      "org.webjars" % "d3js" % "3.5.5-1" / "d3.min.js",
       RuntimeDOM % "test"))
   .enablePlugins(ScalaJSPlugin)
 
