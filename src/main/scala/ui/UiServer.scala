@@ -1,19 +1,19 @@
 
 
 /*
- * Copyright © 2014 Antoine Comte
+ *  Copyright © 2015 Antoine Comte
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
  */
 
 package ui
@@ -36,9 +36,14 @@ import akka.pattern.ask
 import akka.util.Timeout
 import spray.routing.directives.CachingDirectives
 import scala.concurrent.duration._
-import scala.concurrent.{ Future, ExecutionContext }
+import scala.concurrent.{ Await, Future, ExecutionContext }
 import scala.Some
 import ui.ValueStreamBridge.{ CallBack, RegisterStopHandler }
+
+import gj.shared.api.Bucket
+import gj.shared.api.GjAPI
+
+import upickle._
 
 /**
  * UI Server configuration
@@ -121,39 +126,40 @@ trait UIService extends HttpService with SprayJsonSupport {
    */
   def metricProvider: MetricProvider
 
-  /**
-   * representation of a Bucket
-   * @param name
-   */
-  case class BucketResponse(name: String)
-
-  /**
-   * Json Serialisation protocol
-   */
-  object MyJsonProtocol extends DefaultJsonProtocol {
-    implicit val bucketResponseFormat = jsonFormat1(BucketResponse)
+  object AutowireServer extends autowire.Server[String, upickle.Reader, upickle.Writer] {
+    def read[Result: upickle.Reader](p: String) = upickle.read[Result](p)
+    def write[Result: upickle.Writer](r: Result) = upickle.write(r)
   }
 
-  import MyJsonProtocol._
+  object apiImpl extends GjAPI {
+    implicit val ex = actorRefFactory.dispatcher
+    def listBuckets() = metricProvider.listMetrics map (_.toList map (m ⇒ Bucket(m.bucket.name)))
+  }
 
   /**
    *
    */
   def apiRoutes = pathPrefix("api") {
+    implicit val ex = actorRefFactory.dispatcher
     get {
-      implicit val ex = actorRefFactory.dispatcher
       respondWithHeader(`Cache-Control`(`no-cache`)) {
-        path("buckets") {
-          complete {
-            metricProvider.listMetrics map (_ map (m ⇒ BucketResponse(m.bucket.name)))
-          }
-        } ~
-          path("version") {
-            import DefaultJsonProtocol._
-            complete(gj.buildinfo.BuildInfo.toMap.mapValues(_.toString))
-          }
+        path("version") {
+          import DefaultJsonProtocol._
+          complete(gj.buildinfo.BuildInfo.toMap.mapValues(_.toString))
+        }
       }
-    }
+    } ~
+      post {
+        path(Segments) { s ⇒
+          extract(_.request.entity.asString) { e ⇒
+            complete {
+              AutowireServer.route[GjAPI](apiImpl)(
+                autowire.Core.Request(s, upickle.read[Map[String, String]](if (e.isEmpty) "{}" else e)))
+              //
+            }
+          }
+        }
+      }
   }
 
   /**

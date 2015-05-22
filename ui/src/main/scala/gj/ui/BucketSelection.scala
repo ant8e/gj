@@ -1,12 +1,18 @@
 package gj.ui
 
+import gj.shared.api.GjAPI
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
+import scala.util.Success
+
 object BucketSelection {
+
   case class Bucket(name: String, active: Boolean)
   type State = List[Bucket]
 
+  import scalajs.concurrent.JSExecutionContext.runNow
+  implicit val ec = runNow
   val component = ReactComponentB[Unit]("BucketSelection")
     .initialState(List.empty[Bucket])
     .render((_, state) =>
@@ -23,7 +29,15 @@ object BucketSelection {
                   <.span(^.className := "glyphicon glyphicon-minus"))))
           }
         )))
-    .componentDidMount(scope => scope.modState(s => List(Bucket("aa", true))))
+    .componentDidMount(scope => loadBuckets onComplete {
+      case Success(l) => scope.modState(s => l map (b => Bucket(b.name, false)))
+      case _ =>
+    })
     .buildU
+
+  def loadBuckets() = {
+    import autowire._
+    API.Client[GjAPI].listBuckets().call()
+  }
 
 }
