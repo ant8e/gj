@@ -16,19 +16,20 @@
 
 package gj
 
-import gj.actor.MetricRepository.{ MetricListResponse, MetricListQuery }
-import gj.actor.ValuesProvider.{ UnSubscribe, Subscribe }
-import gj.metric._
-import java.net.{ InetAddress, InetSocketAddress }
+import java.net.InetSocketAddress
 
-import scala.concurrent.duration._
-import akka.pattern.ask
-import akka.io.{ Udp, IO }
-import akka.util.Timeout
 import akka.actor._
+import akka.io.{ IO, Udp }
+import akka.pattern.ask
+import akka.util.Timeout
+import gj.actor.MetricRepository.{ MetricListQuery, MetricListResponse }
+import gj.actor.ValuesProvider.{ Subscribe, UnSubscribe }
 import gj.actor._
+import gj.metric._
+import gj.ui.{ UiServer, UiServerConfiguration }
+
 import scala.concurrent.Future
-import ui.{ UiServerConfiguration, UiServer }
+import scala.concurrent.duration._
 import scala.language.postfixOps
 
 trait ComponentConfiguration {

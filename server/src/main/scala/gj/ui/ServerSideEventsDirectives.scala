@@ -14,22 +14,20 @@
  *   limitations under the License.
  */
 
-package ui
+package gj.ui
 
-import spray.routing._
-import Directives._
-
-import spray.http._
-import HttpHeaders._
 import akka.actor._
-import scala.concurrent.duration._
-import util.{ Success, Failure }
 import spray.can.Http
+import spray.http.HttpHeaders._
+import spray.http._
+import spray.routing.Directives._
+import spray.routing._
+
+import scala.concurrent.duration._
 
 // Enable scala features
 
-import scala.language.postfixOps
-import scala.language.implicitConversions
+import scala.language.{ implicitConversions, postfixOps }
 
 trait ServerSideEventsDirectives {
 
@@ -52,7 +50,7 @@ trait ServerSideEventsDirectives {
     val responseStart = HttpResponse(
       headers = `Cache-Control`(CacheDirectives.`no-cache`) :: Nil,
       entity = ":" + (" " * 2049) + "\n" // 2k padding for IE using Yaffle
-      )
+    )
 
     // TODO These headers should be standard headers
     val preflightHeaders = List(

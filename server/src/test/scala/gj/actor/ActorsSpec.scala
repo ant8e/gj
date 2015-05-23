@@ -15,26 +15,24 @@
  *   limitations under the License.
  */
 
-package gj
+package gj.actor
 
-import gj.actor._
-import ValuesProvider.{ UnSubscribe, Subscribe }
 import akka.actor.ActorSystem
-import akka.util.Timeout
-import org.scalatest.{ FunSpecLike, FunSpec }
-import akka.testkit.{ TestProbe, ImplicitSender, TestKit, TestActorRef }
 import akka.pattern.ask
-import org.scalatest.matchers.MustMatchers
-import scala.concurrent.duration._
-import language.postfixOps
+import akka.testkit.{ ImplicitSender, TestActorRef, TestKit, TestProbe }
+import akka.util.Timeout
+import gj.actor.MetricRepository._
+import gj.actor.RawMetricHandler._
+import gj.actor.ValuesProvider.{ Subscribe, UnSubscribe }
+import gj.metric._
+import gj.ui.ServerSideEventsDirectives.{ Message, RegisterClosedHandler }
+import gj.ui.ValueStreamBridge
+import gj.ui.ValueStreamBridge.RegisterStopHandler
+import org.scalatest.{ FunSpecLike, MustMatchers }
 
-import MetricRepository._
-import RawMetricHandler._
-import metric._
+import scala.concurrent.duration._
+import scala.language.postfixOps
 import scala.util.Success
-import ui.ValueStreamBridge
-import ui.ServerSideEventsDirectives.{ Message, RegisterClosedHandler }
-import ui.ValueStreamBridge.RegisterStopHandler
 
 class ActorsSpec(_system: ActorSystem) extends TestKit(_system) with FunSpecLike with ImplicitSender with MustMatchers {
   def this() = this(ActorSystem("ActorsSpec"))

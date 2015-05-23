@@ -13,23 +13,19 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-package gj
+package gj.ui
 
-import akka.actor.{ ActorSystem, ActorRef }
-import gj.metric.{ SimpleBucket, LongCounter, _ }
-import org.scalatest.FunSpec
-import org.scalatest.matchers.MustMatchers
-import scala.concurrent.Future
+import akka.actor.{ ActorRef, ActorSystem }
+import gj.metric.{ LongCounter, SimpleBucket, _ }
+import gj.{ ActorSystemProvider, MetricProvider }
+import org.scalatest.{ FunSpec, MustMatchers }
 import spray.http._
-import spray.httpx.unmarshalling._
-
 import spray.httpx.encoding.Gzip
+import spray.httpx.unmarshalling._
 import spray.testkit.ScalatestRouteTest
-import ui.UIService
 
-/**
- *
- */
+import scala.concurrent.Future
+
 class UiServerSpec extends FunSpec with ScalatestRouteTest with UIService with MustMatchers with MetricProvider with ActorSystemProvider {
   def actorRefFactory = system
 
@@ -41,21 +37,15 @@ class UiServerSpec extends FunSpec with ScalatestRouteTest with UIService with M
         contentType must equal(`text/html(UTF8)`)
         Gzip.decode(response).as[String].right.get must include("<!doctype html>")
       }
-
     }
-
     it("should serve the list of active buckets") {
       pending
     }
   }
 
   override def unSubscribe(metric: Metric, receiver: ActorRef): Unit = {}
-
   override def subscribe(metric: Metric, receiver: ActorRef): Unit = {}
-
   override def listMetrics: Future[Seq[Metric]] = Future.successful(List(LongCounter(SimpleBucket("test.bucket"))))
-
   override def actorSystem: ActorSystem = system
-
   override def metricProvider: MetricProvider = this
 }

@@ -16,34 +16,27 @@
  *   limitations under the License.
  */
 
-package ui
+package gj.ui
 
-import akka.actor._
-import gj.metric.{ MetricValueAt, _ }
-import gj.{ ComponentConfiguration, MetricProvider, ActorSystemProvider }
-import spray.http.CacheDirectives.public
-import spray.http.CacheDirectives.`max-age`
-import spray.http.CacheDirectives.`no-cache`
-import spray.routing._
-import akka.actor.{ ActorRefFactory, ActorRef, Actor, Props }
-import spray.http.{ HttpHeaders, StatusCodes }
-import spray.http.HttpHeaders.`Cache-Control`
-import spray.httpx.SprayJsonSupport
-import spray.json.DefaultJsonProtocol
-import spray.can.Http
+import akka.actor.{ Actor, ActorRef, ActorRefFactory, Props, _ }
 import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
-import spray.routing.directives.CachingDirectives
-import scala.concurrent.duration._
-import scala.concurrent.{ Await, Future, ExecutionContext }
-import scala.Some
-import ui.ValueStreamBridge.{ CallBack, RegisterStopHandler }
-
-import gj.shared.api.Bucket
-import gj.shared.api.GjAPI
-
+import gj.metric.{ MetricValueAt, _ }
+import gj.shared.api.{ Bucket, GjAPI }
+import gj.ui.ValueStreamBridge.{ CallBack, RegisterStopHandler }
+import gj.{ ActorSystemProvider, ComponentConfiguration, MetricProvider }
+import spray.can.Http
+import spray.http.CacheDirectives.{ `max-age`, `no-cache` }
+import spray.http.HttpHeaders.`Cache-Control`
+import spray.http.StatusCodes
+import spray.httpx.SprayJsonSupport
+import spray.json.DefaultJsonProtocol
+import spray.routing._
 import upickle._
+
+import scala.concurrent.duration._
+import scala.concurrent.{ ExecutionContext, Future }
 
 /**
  * UI Server configuration

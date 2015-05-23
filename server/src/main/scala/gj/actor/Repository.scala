@@ -16,18 +16,17 @@
 
 package gj.actor
 
-import akka.actor.{ ActorLogging, ActorRef, Actor, Props }
+import akka.actor.{ Actor, ActorLogging, ActorRef, Props }
 import gj.metric._
-import scala.Some
-import storage.{ MemoryMetricStore, MetricStore }
+import gj.storage.MemoryMetricStore
 
 /**
  * Handle the metric operation, store and aggregate all the metrics
  */
 class MetricRepository extends Actor with ActorLogging {
 
-  import context._
   import MetricRepository._
+  import context._
 
   private var metricActors = Map[Metric, ActorRef]()
 

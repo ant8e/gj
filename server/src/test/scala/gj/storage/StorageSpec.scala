@@ -14,11 +14,10 @@
  *   limitations under the License.
  */
 
-package gj
+package gj.storage
 
-import gj.metric.{ SimpleBucket, LongCounter, _ }
+import gj.metric.{ LongCounter, SimpleBucket, _ }
 import org.scalatest.FunSpec
-import storage.{ MemoryMetricStore, MetricStore }
 
 /**
  *

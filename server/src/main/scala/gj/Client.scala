@@ -13,6 +13,7 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
+package gj
 
 import java.net.InetSocketAddress
 import scala.concurrent.duration._

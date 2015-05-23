@@ -17,8 +17,6 @@
 package gj.metric
 
 import java.nio.ByteBuffer
-import scala.reflect.ClassTag
-import java.lang.reflect.Constructor
 
 object `package` {
   /**
