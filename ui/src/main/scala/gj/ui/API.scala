@@ -49,9 +49,17 @@ object API {
     def subscribe(f: EventReceiver) = subscribers = subscribers :+ f
     def unSubscribe(f: EventReceiver) = subscribers = subscribers filterNot (_ == f)
 
+    private val eventQueue = collection.mutable.Queue.empty[Event]
     def dispatch(e: Event) = {
       println(s"dispatching  $e")
-      subscribers foreach (dispatch_(e, _))
+      val currentlyDispatching = eventQueue.nonEmpty
+      eventQueue.enqueue(e)
+      if (!currentlyDispatching) {
+        while (eventQueue.nonEmpty) {
+          subscribers foreach (dispatch_(eventQueue.head, _))
+          eventQueue.dequeue() // only dequeuing afert all receveir have seen the event
+        }
+      }
     }
 
     private def dispatch_(e: Event, r: EventReceiver): Unit = if (r.isDefinedAt(e)) r.apply(e)

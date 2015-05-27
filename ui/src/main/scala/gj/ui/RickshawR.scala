@@ -16,6 +16,8 @@
 
 package gj.ui
 
+import gj.ui.API.Dispatcher
+import gj.ui.API.Dispatcher.EventReceiver
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import org.scalajs.dom.html.Div
@@ -32,6 +34,7 @@ object RickshawR {
   type State = UndefOr[(RickshawGraph, Serie)]
   val component = ReactComponentB[Props]("RickshawR")
     .initialState(js.undefined: State)
+    .backend(new Backend(_))
     .render(props => <.div())
     .componentDidMount { scope =>
       val node = scope.getDOMNode().asInstanceOf[Div]
@@ -53,13 +56,27 @@ object RickshawR {
 
       graph.render()
       scope.setState((graph, serie))
-      serie.data.push(Data(0, 100))
-      serie.data.push(Data(1, 200))
+      //      serie.data.push(Data(0, 100))
+      //      serie.data.push(Data(1, 200))
       graph.update()
     }
+
     //    .configure(extra.LogLifecycle.short)
+    .componentDidMount(scope => Dispatcher.subscribe(scope.backend.eventHandler))
     .build
 
+  class Backend(scope: BackendScope[Props, State]) {
+    val metric = scope.props
+    def eventHandler: EventReceiver = {
+      case API.GraphValue(`metric`, ts, value) =>
+        val (g, s) = scope.state.get
+        if (s.data.length>10)
+          s.data.shift()
+        s.data.push(Data((ts / 1000).toInt, value.toInt))
+        g.update()
+    }
+
+  }
 }
 
 @JSName("Rickshaw.Graph")
