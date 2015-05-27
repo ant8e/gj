@@ -70,7 +70,7 @@ object RickshawR {
     def eventHandler: EventReceiver = {
       case API.GraphValue(`metric`, ts, value) =>
         val (g, s) = scope.state.get
-        if (s.data.length>10)
+        if (s.data.length > 10)
           s.data.shift()
         s.data.push(Data((ts / 1000).toInt, value.toInt))
         g.update()
