@@ -36,4 +36,27 @@ object API {
     def write[Result: upickle.Writer](r: Result) = upickle.write(r)
   }
 
+  sealed trait Event
+  case class AddActiveGraph(name: String) extends Event
+  case class RemoveActiveGraph(name: String) extends Event
+  case class AvailableGraphs(l: List[GraphStores.Graph]) extends Event
+  case class GraphValue(name: String, ts: Long, value: Long) extends Event
+  case object RefreshAvailableGraphs extends Event
+
+  object Dispatcher {
+
+    type EventReceiver = PartialFunction[Event, Unit]
+    def subscribe(f: EventReceiver) = subscribers = subscribers :+ f
+    def unSubscribe(f: EventReceiver) = subscribers = subscribers filterNot (_ == f)
+
+    def dispatch(e: Event) = {
+      println(s"dispatching  $e")
+      subscribers foreach (dispatch_(e, _))
+    }
+
+    private def dispatch_(e: Event, r: EventReceiver): Unit = if (r.isDefinedAt(e)) r.apply(e)
+
+    private var subscribers = List.empty[EventReceiver]
+  }
+
 }

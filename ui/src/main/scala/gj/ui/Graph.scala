@@ -20,6 +20,11 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
 object Graph {
-  val component = ReactComponentB[Unit]("GraphPanel")
-    .render(_ => <.div())
+  type Props = String
+  val component = ReactComponentB[Props]("Graph")
+    .render(props =>
+      <.div(^.className := "col-xs-9 col-sm-6 placeholder",
+        RickshawR.component(props)))
+    .build
+
 }

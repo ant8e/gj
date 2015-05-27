@@ -16,44 +16,47 @@
 
 package gj.ui
 
-import gj.shared.api.GjAPI
+import gj.ui.API.{ AddActiveGraph, Dispatcher, RemoveActiveGraph }
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
-import scala.util.Success
-
 object BucketSelection {
 
-  case class Bucket(name: String, active: Boolean)
-  type State = List[Bucket]
+  type Props = List[GraphStores.Graph]
 
-  import scalajs.concurrent.JSExecutionContext.runNow
-  implicit val ec = runNow
-  val component = ReactComponentB[Unit]("BucketSelection")
-    .initialState(List.empty[Bucket])
-    .render((_, state) =>
+  class Backend(scope: BackendScope[Props, _]) {
+    def activate(name: String) = {
+      Dispatcher.dispatch(AddActiveGraph(name))
+    }
+
+    def inactivate(name: String) = {
+      Dispatcher.dispatch(RemoveActiveGraph(name))
+    }
+  }
+
+  val component = ReactComponentB[Props]("BucketSelection")
+    .stateless
+    .backend(new Backend(_))
+    .render((props, _, backend) =>
       <.div(^.className := "col-sm-3 col-md-2 sidebar",
         <.ul(^.className := "list-group",
-          state map { b =>
+          props map { b =>
             <.li(^.key := b.name, ^.className := "list-group-item",
               b.name + " ",
               <.i(b.active ?= (^.className := "fa fa-bar-chart-o")),
               <.span(^.className := "pull-right",
-                <.button(^.tpe := "button", ^.className := "btn btn-default btn-xs", ^.disabled := b.active,
+                <.button(^.tpe := "button",
+                  ^.className := "btn btn-default btn-xs",
+                  ^.disabled := b.active,
+                  ^.onClick --> backend.activate(b.name),
                   <.span(^.className := "glyphicon glyphicon-plus")),
-                <.button(^.tpe := "button", ^.className := "btn btn-default btn-xs", ^.disabled := !b.active,
+                <.button(^.tpe := "button",
+                  ^.className := "btn btn-default btn-xs",
+                  ^.disabled := !b.active,
+                  ^.onClick --> backend.inactivate(b.name),
                   <.span(^.className := "glyphicon glyphicon-minus"))))
           }
         )))
-    .componentDidMount(scope => loadBuckets onComplete {
-      case Success(l) => scope.modState(s => l map (b => Bucket(b.name, false)))
-      case _ =>
-    })
-    .buildU
-
-  def loadBuckets() = {
-    import autowire._
-    API.Client[GjAPI].listBuckets().call()
-  }
+    .build
 
 }

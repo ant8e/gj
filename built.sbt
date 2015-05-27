@@ -10,7 +10,7 @@ name := "graphjunkie"
 lazy val commonSettings = Seq(
   version := "0.1-SNAPSHOT",
   scalaVersion := "2.11.6",
-  scalacOptions ++= Seq("-feature", "-deprecation","-unchecked")
+  scalacOptions ++= Seq("-feature", "-deprecation", "-unchecked")
 ) ++ scalariformSettings
 
 
@@ -26,12 +26,12 @@ val sharedJvm = shared.jvm
 val sharedJs = shared.js
 
 
-lazy val root = (project in file("server"))
+lazy val server = (project in file("server"))
   .enablePlugins(BuildInfoPlugin)
   .settings(
-   commonSettings,
-   Revolver.settings,
-mainClass in Revolver.reStart := Some("gj.Main"),
+    commonSettings,
+    Revolver.settings,
+    mainClass in Revolver.reStart := Some("gj.Main"),
     buildInfoOptions += BuildInfoOption.ToMap,
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion, buildInfoBuildNumber),
     buildInfoPackage := "gj.buildinfo",
@@ -49,10 +49,11 @@ mainClass in Revolver.reStart := Some("gj.Main"),
         "org.scalatest" %% "scalatest" % "2.2.1" % "test",
         "org.webjars" % "bootstrap" % "3.3.4",
         "org.webjars" % "jquery" % "1.11.1",
-        "org.webjars" % "font-awesome" % "4.2.0")
+        "org.webjars" % "rickshaw" % "1.5.0" ,
+      "org.webjars" % "font-awesome" % "4.2.0")
     })
   .aggregate(ui, sharedJvm)
-  .dependsOn(sharedJvm,ui)
+  .dependsOn(sharedJvm, ui)
   .settings((resources in Compile) += (fastOptJS in(ui, Compile)).value.data)
   //  .settings((resources in Compile) += (fullOptJS in (ui, Compile)).value.data)
   .settings((resources in Compile) += (packageJSDependencies in(ui, Compile)).value)
@@ -72,15 +73,18 @@ lazy val ui = (project in file("ui"))
     ),
     jsDependencies ++= Seq(
       "org.webjars" % "react" % "0.13.1" / "react-with-addons.js" commonJSName "React",
-      //      "org.webjars" % "rickshaw" % "1.5.0" / "rickshaw.min.js" dependsOn "d3.min.js",
-      //      "org.webjars" % "d3js" % "3.5.5-1" / "d3.min.js",
       RuntimeDOM % "test"))
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(sharedJs)
 
 
 
-
+lazy val root =
+  project.in(file("."))
+    .settings(commonSettings,
+      mainClass in (Compile,run):=Some("gj.Main"))
+    .aggregate(server)
+    .dependsOn(server)
 
 dockerSettings
 

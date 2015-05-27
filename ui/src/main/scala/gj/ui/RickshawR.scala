@@ -18,8 +18,67 @@ package gj.ui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
+import org.scalajs.dom.html.Div
+import org.scalajs.dom.raw.HTMLElement
+
+import scala.scalajs.js
+import scala.scalajs.js.{ UndefOr, Dynamic }
+import UndefOr._
+import scala.scalajs.js.Dynamic.{ global, newInstance }
+import scala.scalajs.js.annotation.JSName
 
 object RickshawR {
-  val component = ReactComponentB[Unit]("RickshawR")
-    .render(_ => <.div())
+  type Props = String
+  type State = UndefOr[(RickshawGraph, Serie)]
+  val component = ReactComponentB[Props]("RickshawR")
+    .initialState(js.undefined: State)
+    .render(props => <.div())
+    .componentDidMount { scope =>
+      val node = scope.getDOMNode().asInstanceOf[Div]
+
+      val serie = Dynamic.literal(color = "steelblue", name = scope.props, data = js.Array()).asInstanceOf[Serie]
+
+      val conf = Dynamic.literal(
+        element = node,
+        width = 500,
+        heigth = 220,
+        renderer = "line",
+        series = js.Array(serie))
+      val graph = new RickshawGraph(conf)
+      val xaxis = newInstance(global.Rickshaw.Graph.Axis.Time)(Dynamic.literal(
+        graph = graph,
+        ticksTreatment = "glow",
+        timeFixture = newInstance(global.Rickshaw.Fixtures.Time)()
+      ))
+
+      graph.render()
+      scope.setState((graph, serie))
+      serie.data.push(Data(0, 100))
+      serie.data.push(Data(1, 200))
+      graph.update()
+    }
+    //    .configure(extra.LogLifecycle.short)
+    .build
+
+}
+
+@JSName("Rickshaw.Graph")
+class RickshawGraph(conf: js.Object) extends js.Object {
+  def render(): Unit = js.native
+  def update(): Unit = js.native
+}
+trait Serie extends js.Object {
+  val data: js.Array[Data] = js.native
+}
+trait Data extends js.Object {
+  val x: Int = js.native
+  val y: Int = js.native
+}
+object Data {
+  def apply(x: Int, y: Int) = Dynamic.literal(x = x, y = y).asInstanceOf[Data]
+}
+
+trait RickshawGraphConf extends js.Object {
+  var element: HTMLElement = js.native
+  var width: Int = js.native
 }

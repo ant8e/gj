@@ -20,7 +20,14 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
 object GraphPanel {
-  val component = ReactComponentB[Unit]("GraphPanel")
-    .render(_ => <.div())
-    .buildU
+  type Props = List[String]
+  val component = ReactComponentB[Props]("GraphPanel")
+    .render(props =>
+      <.div(^.cls := "col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main",
+        <.h3(^.cls := "page-header", "Dashboard"),
+        <.div(^.cls := "row placeholders",
+          props.map(b => Graph.component.withKey(b)(b)))))
+    //    .configure(extra.LogLifecycle.verbose)
+    .build
+
 }

@@ -35,6 +35,8 @@ object UiApp extends js.JSApp {
 
   object App {
 
+    val store = GraphStores
+
     val component = ReactComponentB[Unit]("App")
       .initialState(DashBoardTabId: TabId)
       .backend(new Backend(_))

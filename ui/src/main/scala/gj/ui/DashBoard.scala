@@ -16,11 +16,37 @@
 
 package gj.ui
 
+import gj.ui.API.{ RefreshAvailableGraphs, Dispatcher }
+import gj.ui.API.Dispatcher.EventReceiver
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
+import ScalazReact._
 
 object DashBoard {
+  type State = List[GraphStores.Graph]
+  val st = ReactS.Fix[State]
+
   val component = ReactComponentB[Unit]("DashBoard")
-    .render(_ => <.div(BucketSelection.component(), GraphPanel.component()))
+    .initialState(List.empty[GraphStores.Graph])
+    .backend(new Backend(_))
+    .render((_, state, backend) =>
+      <.div(^.cls := "col-md-12",
+        BucketSelection.component(state),
+        <.div(^.cls := "col-md-10",
+          GraphPanel.component(state filter (_.active) map (_.name)))))
+    .componentDidMount(scope => {
+      Dispatcher.subscribe(scope.backend.eventHandler)
+      Dispatcher.dispatch(RefreshAvailableGraphs)
+    })
+    .componentWillUnmount(scope =>
+      Dispatcher.unSubscribe(scope.backend.eventHandler))
+    .configure(extra.LogLifecycle.short)
     .buildU
+
+  class Backend(scope: BackendScope[Unit, State]) {
+    def eventHandler: EventReceiver = {
+      case API.AvailableGraphs(l) => scope.modState(_ => l)
+    }
+
+  }
 }

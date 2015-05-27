@@ -18,8 +18,6 @@ package gj.shared.api
 
 import scala.concurrent.Future
 
-
 trait GjAPI {
   def listBuckets () :Future[List[Bucket]]
-
 }
