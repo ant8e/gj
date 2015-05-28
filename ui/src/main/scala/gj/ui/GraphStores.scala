@@ -16,7 +16,7 @@
 
 package gj.ui
 
-import gj.shared.api.GjAPI
+import gj.shared.api.DashBoardAPI
 import gj.ui.API.{ AvailableGraphs, Dispatcher, Event }
 import org.scalajs.dom.{ MessageEvent, EventSource }
 
@@ -40,7 +40,7 @@ object GraphStores {
   def refreshAvailableGraphs(): Unit = {
     import autowire._
     import scalajs.concurrent.JSExecutionContext.Implicits.runNow
-    val f = API.Client[GjAPI].listBuckets().call()
+    val f = API.Client[DashBoardAPI].listBuckets().call()
     f.onComplete {
       case Success(l) => {
         val ag = activeGraphs()

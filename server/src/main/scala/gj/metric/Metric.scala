@@ -20,7 +20,7 @@ import java.nio.ByteBuffer
 
 object `package` {
   /**
-   * A Metric is a combination of a identifier, a style, a and valuetype
+   * A Metric is a combination of a identifier, a style, a and type
    */
   type Metric = MetricId with MetricType with MetricStyle
 }

@@ -50,7 +50,7 @@ lazy val server = (project in file("server"))
         "org.webjars" % "bootstrap" % "3.3.4",
         "org.webjars" % "jquery" % "1.11.1",
         "org.webjars" % "rickshaw" % "1.5.0" ,
-      "org.webjars" % "font-awesome" % "4.2.0")
+      "org.webjars" % "font-awesome" % "4.2.0" exclude("org.webjars","bootstrap"))
     })
   .aggregate(ui, sharedJvm)
   .dependsOn(sharedJvm, ui)

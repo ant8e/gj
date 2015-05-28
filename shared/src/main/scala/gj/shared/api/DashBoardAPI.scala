@@ -18,6 +18,6 @@ package gj.shared.api
 
 import scala.concurrent.Future
 
-trait GjAPI {
+trait DashBoardAPI {
   def listBuckets () :Future[List[Bucket]]
 }

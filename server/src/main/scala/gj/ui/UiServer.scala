@@ -23,7 +23,7 @@ import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
 import gj.metric.{ MetricValueAt, _ }
-import gj.shared.api.{ Bucket, GjAPI }
+import gj.shared.api.{ Bucket, DashBoardAPI }
 import gj.ui.ValueStreamBridge.{ CallBack, RegisterStopHandler }
 import gj.{ ActorSystemProvider, ComponentConfiguration, MetricProvider }
 import spray.can.Http
@@ -124,7 +124,7 @@ trait UIService extends HttpService with SprayJsonSupport {
     def write[Result: upickle.Writer](r: Result) = upickle.write(r)
   }
 
-  object apiImpl extends GjAPI {
+  object apiImpl extends DashBoardAPI {
     implicit val ex = actorRefFactory.dispatcher
     def listBuckets() = metricProvider.listMetrics map (_.toList map (m ⇒ Bucket(m.bucket.name)))
   }
@@ -146,7 +146,7 @@ trait UIService extends HttpService with SprayJsonSupport {
         path(Segments) { s ⇒
           extract(_.request.entity.asString) { e ⇒
             complete {
-              AutowireServer.route[GjAPI](apiImpl)(
+              AutowireServer.route[DashBoardAPI](apiImpl)(
                 autowire.Core.Request(s, upickle.read[Map[String, String]](if (e.isEmpty) "{}" else e)))
               //
             }
