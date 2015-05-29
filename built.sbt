@@ -1,9 +1,5 @@
 
 import scalariform.formatter.preferences._
-import AssemblyKeys._
-import DockerKeys._
-import sbtdocker.mutable.Dockerfile
-import sbtdocker.ImageName
 
 name := "graphjunkie"
 
@@ -86,41 +82,11 @@ lazy val root =
     .aggregate(server)
     .dependsOn(server)
 
-dockerSettings
 
 ScalariformKeys.preferences := FormattingPreferences()
   .setPreference(AlignParameters, true)
   .setPreference(RewriteArrowSymbols, true)
   .setPreference(PreserveDanglingCloseParenthesis, false)
-
-assemblySettings
-
-mainClass in assembly := Some("gj.Main")
-
-jarName in assembly := name.value + "-" + version.value + "-" + readBuildInfoBuildNumber.value + ".jar"
-
-
-//Docker file definition
-docker <<= (docker dependsOn assembly)
-
-imageName in docker := {
-  ImageName(
-    namespace = Some(organization.value),
-    repository = name.value,
-    tag = Some("b" + readBuildInfoBuildNumber.value))
-}
-
-dockerfile in docker := {
-  val artifact = (outputPath in assembly).value
-  val artifactTargetPath = s"/app/${artifact.name}"
-  new Dockerfile {
-    from("dockerfile/java")
-    add(artifact, artifactTargetPath)
-    expose(8080)
-    entryPoint("java", "-jar", artifactTargetPath)
-  }
-}
-
 
 
 
