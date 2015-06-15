@@ -1,5 +1,3 @@
-
-
 /*
  *  Copyright © 2015 Antoine Comte
  *
@@ -38,13 +36,9 @@ import upickle._
 import scala.concurrent.duration._
 import scala.concurrent.{ ExecutionContext, Future }
 
-/**
- * UI Server configuration
- */
+/** UI Server configuration */
 trait UiServerConfiguration {
-  /**
-   * UI server listening port
-   */
+  /**  UI server listening port */
   def uiServerPort: Int
 
   /**
@@ -57,9 +51,6 @@ trait UiServerConfiguration {
 
 object UiServerConfiguration {
 
-  /**
-   * Default interface
-   */
   val defaultInterface = "localhost"
 
   /**
@@ -69,9 +60,7 @@ object UiServerConfiguration {
   val allInterfaces = Some("::")
 }
 
-/**
- * Spray HttpService to serve the UI (css,html,js) + SSE value streams
- */
+/**  Spray HttpService to serve the UI (css,html,js) + SSE value streams */
 trait UiServer extends ComponentConfiguration {
   self: ActorSystemProvider with MetricProvider ⇒
 
@@ -98,10 +87,7 @@ trait UiServer extends ComponentConfiguration {
 
 }
 
-/**
- * Service Actor to run our Service
- */
-
+/** Service Actor to run our Service */
 class UIServiceActor(val metricProvider: MetricProvider) extends Actor with UIService {
 
   override def receive = runRoute(routes)
@@ -109,14 +95,9 @@ class UIServiceActor(val metricProvider: MetricProvider) extends Actor with UISe
   override def actorRefFactory: ActorRefFactory = context
 }
 
-/**
- * This trait defines the UI service behavior
- */
+/** This trait defines the UI service behavior */
 trait UIService extends HttpService with SprayJsonSupport {
-  /**
-   * a MetricProvider needs to be supplied by the class mixing us in
-   * @return
-   */
+  /** A MetricProvider needs to be supplied by the class mixing us in */
   def metricProvider: MetricProvider
 
   object AutowireServer extends autowire.Server[String, upickle.Reader, upickle.Writer] {
@@ -129,9 +110,6 @@ trait UIService extends HttpService with SprayJsonSupport {
     def listBuckets() = metricProvider.listMetrics map (_.toList map (m ⇒ Bucket(m.bucket.name)))
   }
 
-  /**
-   *
-   */
   def apiRoutes = pathPrefix("api") {
     implicit val ex = actorRefFactory.dispatcher
     get {
@@ -147,30 +125,26 @@ trait UIService extends HttpService with SprayJsonSupport {
           extract(_.request.entity.asString) { e ⇒
             complete {
               AutowireServer.route[DashBoardAPI](apiImpl)(
-                autowire.Core.Request(s, upickle.read[Map[String, String]](if (e.isEmpty) "{}" else e)))
-              //
+                autowire.Core.Request(s, upickle.read[Map[String, String]](if (e.isEmpty) "{}" else e))
+              )
             }
           }
         }
       }
   }
 
-  /**
-   * values route
-   */
-  def valuesRoute = pathPrefix("values" / Segments) {
-    b ⇒
-      pathEndOrSingleSlash {
-        dynamic {
-          implicit val ex = actorRefFactory.dispatcher
-          onSuccess(listMetric(b)) {
-            lm ⇒
-              if (lm.isEmpty)
-                complete(StatusCodes.NotFound)
-              else metricValueStream(lm: _*)
-          }
+  def valuesRoute = pathPrefix("values" / Segments) { b ⇒
+    pathEndOrSingleSlash {
+      dynamic {
+        implicit val ex = actorRefFactory.dispatcher
+        onSuccess(listMetric(b)) {
+          lm ⇒
+            if (lm.isEmpty)
+              complete(StatusCodes.NotFound)
+            else metricValueStream(lm: _*)
         }
       }
+    }
   }
 
   def listMetric(names: List[String])(implicit ec: ExecutionContext): Future[List[Metric]] = {
@@ -190,7 +164,6 @@ trait UIService extends HttpService with SprayJsonSupport {
    * @return A sse route, streaming an event for each value
    */
   def metricValueStream(metrics: Metric*)(implicit actorRefFactory: ActorRefFactory): Route = {
-
     import ServerSideEventsDirectives.sse
 
     sse {
@@ -205,9 +178,7 @@ trait UIService extends HttpService with SprayJsonSupport {
     }
   }
 
-  /**
-   * Route for the static content (hmtl,css,....)
-   */
+  /** Route for the static content (hmtl,css,....) */
   def staticRoutes: Route = get {
     // Static content can live forever in cache
     // Serving webjars from the wj prefix
@@ -225,7 +196,6 @@ trait UIService extends HttpService with SprayJsonSupport {
           // Then anything form the web and then the root directory
           getFromResourceDirectory("web") ~
           getFromResourceDirectory("")
-
       }
   }
 
@@ -236,7 +206,6 @@ trait UIService extends HttpService with SprayJsonSupport {
         staticRoutes
     }
   }
-
 }
 
 /**
@@ -246,7 +215,6 @@ trait UIService extends HttpService with SprayJsonSupport {
  * @param metric
  */
 class ValueStreamBridge(sseChannel: ActorRef, metric: Metric) extends Actor {
-
   import ServerSideEventsDirectives.{ Message, RegisterClosedHandler }
   import ValueStreamBridge.Stop
 
