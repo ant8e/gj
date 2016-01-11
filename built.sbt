@@ -33,7 +33,7 @@ lazy val server = (project in file("server"))
     buildInfoPackage := "gj.buildinfo",
     libraryDependencies ++= {
       val sprayVersion = "1.3.3"
-      val akkaVersion = "2.3.10"
+      val akkaVersion = "2.4.1"
       Seq(
         "io.spray" %% "spray-can" % sprayVersion,
         "io.spray" %% "spray-routing" % sprayVersion,

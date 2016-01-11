@@ -18,7 +18,7 @@ package gj.actor
 
 import akka.actor._
 import akka.io.Udp
-import akka.routing.RoundRobinRouter
+import akka.routing.{ RoundRobinPool, RoundRobinRoutingLogic }
 import scala.util.Try
 import scala.language.postfixOps
 import gj.metric._
@@ -67,7 +67,7 @@ object RawMetricHandler {
  * This Actor splits incoming message into their single form
  */
 object RawMetricSplitter {
-  def props(decoder: ActorRef): Props = Props(classOf[RawMetricSplitter], decoder).withRouter(RoundRobinRouter(5))
+  def props(decoder: ActorRef): Props = Props(classOf[RawMetricSplitter], decoder).withRouter(RoundRobinPool(5))
 }
 
 class RawMetricSplitter(decoder: ActorRef) extends Actor {
@@ -85,7 +85,7 @@ class RawMetricSplitter(decoder: ActorRef) extends Actor {
  * This actor decodes a raw metric representation into a MetricOP with an associated MetricStyle
  */
 object MetricDecoder {
-  def props: Props = Props[MetricDecoder].withRouter(RoundRobinRouter(5))
+  def props: Props = Props[MetricDecoder].withRouter(RoundRobinPool(5))
 }
 
 class MetricDecoder extends Actor with ActorLogging {
