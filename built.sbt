@@ -1,13 +1,20 @@
-
 import scalariform.formatter.preferences._
+import com.typesafe.sbt.SbtScalariform
 
 name := "graphjunkie"
 
 lazy val commonSettings = Seq(
   version := "0.1-SNAPSHOT",
   scalaVersion := "2.11.7",
-  scalacOptions ++= Seq("-feature", "-deprecation", "-unchecked")
-) ++ scalariformSettings
+  scalacOptions ++= Seq("-feature", "-deprecation", "-unchecked"),
+
+  SbtScalariform.ScalariformKeys.preferences := SbtScalariform.ScalariformKeys.preferences.value
+    .setPreference(AlignParameters, true)
+    .setPreference(AlignSingleLineCaseStatements, true)
+    .setPreference(DanglingCloseParenthesis, Prevent)
+
+) ++  scalariformSettings
+
 
 
 lazy val shared = (crossProject.crossType(CrossType.Pure) in file("shared"))
@@ -82,11 +89,6 @@ lazy val root =
     .aggregate(server)
     .dependsOn(server)
 
-
-ScalariformKeys.preferences := FormattingPreferences()
-  .setPreference(AlignParameters, true)
-  .setPreference(RewriteArrowSymbols, true)
-  .setPreference(PreserveDanglingCloseParenthesis, false)
 
 
 

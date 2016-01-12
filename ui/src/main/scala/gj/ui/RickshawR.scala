@@ -51,8 +51,7 @@ object RickshawR {
       val xaxis = newInstance(global.Rickshaw.Graph.Axis.Time)(Dynamic.literal(
         graph = graph,
         ticksTreatment = "glow",
-        timeFixture = newInstance(global.Rickshaw.Fixtures.Time)()
-      ))
+        timeFixture = newInstance(global.Rickshaw.Fixtures.Time)()))
 
       graph.render()
       scope.setState((graph, serie))

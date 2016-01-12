@@ -42,8 +42,7 @@ object UiApp extends js.JSApp {
       .backend(new Backend(_))
       .render(scope => <.div(
         NavBar.component(NavBar.Props(scope.state, scope.backend.viewChangeHandler)),
-        MainView.component(scope.state)
-      ))
+        MainView.component(scope.state)))
       .buildU
 
     class Backend(scope: BackendScope[Unit, TabId]) {

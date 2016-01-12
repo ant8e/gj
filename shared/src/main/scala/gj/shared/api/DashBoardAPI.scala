@@ -19,5 +19,5 @@ package gj.shared.api
 import scala.concurrent.Future
 
 trait DashBoardAPI {
-  def listBuckets () :Future[List[Bucket]]
+  def listBuckets(): Future[List[Bucket]]
 }

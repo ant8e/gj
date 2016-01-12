@@ -23,7 +23,8 @@ object Graph {
   type Props = String
   val component = ReactComponentB[Props]("Graph")
     .render(props =>
-      <.div(^.className := "col-xs-9 col-sm-6 placeholder",
+      <.div(
+        ^.className := "col-xs-9 col-sm-6 placeholder",
         RickshawR.component(props)))
     .build
 

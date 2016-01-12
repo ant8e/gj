@@ -28,8 +28,7 @@ object API {
     override def doCall(req: Request): Future[String] = {
       dom.ext.Ajax.post(
         url = "/api/" + req.path.mkString("/"),
-        data = upickle.write(req.args)
-      ).map(_.responseText)
+        data = upickle.write(req.args)).map(_.responseText)
     }
 
     def read[Result: upickle.Reader](p: String) = upickle.read[Result](p)

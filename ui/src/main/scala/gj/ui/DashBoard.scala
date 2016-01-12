@@ -30,9 +30,11 @@ object DashBoard {
     .initialState(List.empty[GraphStores.Graph])
     .backend(new Backend(_))
     .render((_, state, backend) =>
-      <.div(^.cls := "col-md-12",
+      <.div(
+        ^.cls := "col-md-12",
         BucketSelection.component(state),
-        <.div(^.cls := "col-md-10",
+        <.div(
+          ^.cls := "col-md-10",
           GraphPanel.component(state filter (_.active) map (_.name)))))
     .componentDidMount(scope => {
       Dispatcher.subscribe(scope.backend.eventHandler)

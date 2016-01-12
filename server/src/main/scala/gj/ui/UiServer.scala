@@ -125,8 +125,7 @@ trait UIService extends HttpService with SprayJsonSupport {
           extract(_.request.entity.asString) { e ⇒
             complete {
               AutowireServer.route[DashBoardAPI](apiImpl)(
-                autowire.Core.Request(s, upickle.read[Map[String, String]](if (e.isEmpty) "{}" else e))
-              )
+                autowire.Core.Request(s, upickle.read[Map[String, String]](if (e.isEmpty) "{}" else e)))
             }
           }
         }

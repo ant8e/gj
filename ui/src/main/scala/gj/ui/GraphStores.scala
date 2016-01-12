@@ -64,7 +64,8 @@ object GraphStores {
     def dispatchEvent(e: MessageEvent): Unit = {
       org.scalajs.dom.console.info(e)
       val parsed = JSON.parse(e.data.toString)
-      Dispatcher.dispatch(API.GraphValue(parsed.metric.asInstanceOf[String],
+      Dispatcher.dispatch(API.GraphValue(
+        parsed.metric.asInstanceOf[String],
         parsed.ts.asInstanceOf[Double].toLong,
         parsed.value.asInstanceOf[Double].toLong))
     }

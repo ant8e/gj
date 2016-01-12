@@ -23,9 +23,11 @@ object GraphPanel {
   type Props = List[String]
   val component = ReactComponentB[Props]("GraphPanel")
     .render(props =>
-      <.div(^.cls := "col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main",
+      <.div(
+        ^.cls := "col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main",
         <.h3(^.cls := "page-header", "Dashboard"),
-        <.div(^.cls := "row placeholders",
+        <.div(
+          ^.cls := "row placeholders",
           props.map(b => Graph.component.withKey(b)(b)))))
     //    .configure(extra.LogLifecycle.verbose)
     .build
